@@ -3,8 +3,8 @@ import Dexie, { type Table } from 'dexie'
 export interface Diary {
   id?: number
   title: string
-  minDays: number
-  priority: number
+  width: number
+  height: number
   color: string
   fontColor: string
   fontFamily: string

@@ -23,19 +23,8 @@ defineEmits<{
   click: []
 }>()
 
-const spineWidth = computed(() => {
-  const baseWidth = 40
-  const extraDays = Math.max(0, props.diary.minDays - 20)
-  return baseWidth + (extraDays * 2)
-})
-
-const spineHeight = computed(() => {
-  const minHeight = 240
-  const maxHeight = 600
-  const heightRange = maxHeight - minHeight
-  const priorityRatio = props.diary.priority / 100
-  return minHeight + (heightRange * priorityRatio)
-})
+const spineWidth = computed(() => props.diary.width)
+const spineHeight = computed(() => props.diary.height)
 
 const spineStyle = computed(() => ({
   width: `${spineWidth.value}px`,

@@ -73,7 +73,7 @@ const totalPages = computed(() => {
   if (!diary.value) return 0
   const entryDates = entries.value.map(e => e.date)
   const uniqueDates = new Set(entryDates)
-  return Math.max(diary.value.minDays, uniqueDates.size)
+  return Math.max(20, uniqueDates.size)
 })
 
 const sortedEntries = computed(() => {

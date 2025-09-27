@@ -18,25 +18,26 @@
           </div>
 
           <div class="form-group">
-            <label for="minDays">Minimum days (min 20)</label>
+            <label for="width">Width: {{ form.width }}px</label>
             <input
-              id="minDays"
-              v-model.number="form.minDays"
-              type="number"
+              id="width"
+              v-model.number="form.width"
+              type="range"
               min="20"
-              required
+              max="200"
+              class="slider"
             />
           </div>
 
           <div class="form-group">
-            <label for="priority">Priority (0-100)</label>
+            <label for="height">Height: {{ form.height }}px</label>
             <input
-              id="priority"
-              v-model.number="form.priority"
-              type="number"
-              min="0"
-              max="100"
-              required
+              id="height"
+              v-model.number="form.height"
+              type="range"
+              min="100"
+              max="600"
+              class="slider"
             />
           </div>
 
@@ -72,12 +73,14 @@
           </div>
 
           <div class="form-group">
-            <label for="fontSize">Font size (px)</label>
+            <label for="fontSize">Font size: {{ form.fontSize }}px</label>
             <input
               id="fontSize"
               v-model.number="form.fontSize"
-              type="number"
-              required
+              type="range"
+              min="6"
+              max="48"
+              class="slider"
             />
           </div>
 
@@ -141,8 +144,8 @@ const generateRandomFontColor = () => {
 
 const form = ref({
   title: '',
-  minDays: 20,
-  priority: 50,
+  width: 60,
+  height: 300,
   color: generateRandomColor(),
   fontColor: generateRandomFontColor(),
   fontFamily: 'serif',
@@ -154,8 +157,8 @@ const form = ref({
 const previewDiary = computed((): Diary => ({
   id: 0,
   title: form.value.title || 'Sample Title',
-  minDays: form.value.minDays,
-  priority: form.value.priority,
+  width: form.value.width,
+  height: form.value.height,
   color: form.value.color,
   fontColor: form.value.fontColor,
   fontFamily: form.value.fontFamily,
@@ -169,8 +172,8 @@ const createDiary = async () => {
   try {
     await saveDiary({
       title: form.value.title,
-      minDays: form.value.minDays,
-      priority: form.value.priority,
+      width: form.value.width,
+      height: form.value.height,
       color: form.value.color,
       fontColor: form.value.fontColor,
       fontFamily: form.value.fontFamily,
@@ -254,6 +257,45 @@ input[type="color"] {
 input[type="checkbox"] {
   width: auto;
   margin-right: 0.5rem;
+}
+
+.slider {
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--border-color);
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--accent-color);
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.slider::-webkit-slider-thumb:hover {
+  background: #5a6268;
+}
+
+.slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--accent-color);
+  cursor: pointer;
+  border: none;
+  transition: background 0.3s ease;
+}
+
+.slider::-moz-range-thumb:hover {
+  background: #5a6268;
 }
 
 small {
