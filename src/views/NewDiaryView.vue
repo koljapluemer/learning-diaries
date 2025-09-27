@@ -71,6 +71,16 @@
             </select>
           </div>
 
+          <div class="form-group">
+            <label for="fontSize">Font size (px)</label>
+            <input
+              id="fontSize"
+              v-model.number="form.fontSize"
+              type="number"
+              required
+            />
+          </div>
+
           <div class="form-row">
             <div class="form-group">
               <label>
@@ -121,6 +131,7 @@ const form = ref({
   color: '#8b4513',
   fontColor: '#ffffff',
   fontFamily: 'serif',
+  fontSize: 14,
   bold: false,
   italic: false
 })
@@ -133,6 +144,7 @@ const previewDiary = computed((): Diary => ({
   color: form.value.color,
   fontColor: form.value.fontColor,
   fontFamily: form.value.fontFamily,
+  fontSize: form.value.fontSize,
   bold: form.value.bold,
   italic: form.value.italic,
   createdAt: new Date()
@@ -147,6 +159,7 @@ const createDiary = async () => {
       color: form.value.color,
       fontColor: form.value.fontColor,
       fontFamily: form.value.fontFamily,
+      fontSize: form.value.fontSize,
       bold: form.value.bold,
       italic: form.value.italic
     })

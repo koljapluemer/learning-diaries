@@ -56,7 +56,7 @@ const textStyle = computed(() => ({
   fontFamily: props.diary.fontFamily,
   fontWeight: props.diary.bold ? 'bold' : 'normal',
   fontStyle: props.diary.italic ? 'italic' : 'normal',
-  fontSize: '14px',
+  fontSize: `${props.diary.fontSize}px`,
   writingMode: 'vertical-rl' as const,
   textOrientation: 'mixed' as const,
   transform: 'rotate(180deg)',

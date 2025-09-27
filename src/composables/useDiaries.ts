@@ -8,6 +8,7 @@ export interface Diary {
   color: string
   fontColor: string
   fontFamily: string
+  fontSize: number
   bold: boolean
   italic: boolean
   createdAt: Date
