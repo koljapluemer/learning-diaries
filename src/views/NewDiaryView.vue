@@ -160,7 +160,6 @@ const createDiary = async () => {
 <style scoped>
 .new-diary-view {
   min-height: 100vh;
-  background: linear-gradient(135deg, #f5f5dc 0%, #deb887 100%);
   padding: 2rem;
 }
 
@@ -171,10 +170,8 @@ const createDiary = async () => {
 
 h1 {
   text-align: center;
-  color: #2c1810;
   margin-bottom: 2rem;
   font-size: 2.5rem;
-  text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
 }
 
 .form-preview-layout {
@@ -205,7 +202,6 @@ label {
   display: block;
   margin-bottom: 0.5rem;
   font-weight: 600;
-  color: #2c1810;
 }
 
 input, select {
@@ -219,7 +215,7 @@ input, select {
 
 input:focus, select:focus {
   outline: none;
-  border-color: #8b4513;
+  border-color: var(--accent-color);
 }
 
 input[type="color"] {
@@ -262,14 +258,14 @@ small {
 }
 
 .create-btn {
-  background: #8b4513;
+  background: var(--accent-color);
   color: white;
   border: none;
   cursor: pointer;
 }
 
 .create-btn:hover {
-  background: #654321;
+  background: #5a6268;
 }
 
 .preview-section {
@@ -283,7 +279,6 @@ small {
 
 .preview-section h3 {
   margin-bottom: 1.5rem;
-  color: #2c1810;
 }
 
 .preview-container {
@@ -291,7 +286,7 @@ small {
   justify-content: center;
   align-items: flex-end;
   min-height: 200px;
-  background: linear-gradient(135deg, #8b4513 0%, #d2691e 100%);
+  background: var(--border-color);
   border-radius: 8px;
   padding: 2rem;
 }

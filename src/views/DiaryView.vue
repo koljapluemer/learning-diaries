@@ -131,7 +131,6 @@ onMounted(async () => {
 <style scoped>
 .diary-view {
   min-height: 100vh;
-  background: linear-gradient(135deg, #2c1810 0%, #5d4037 100%);
   padding: 2rem;
 }
 
@@ -140,11 +139,10 @@ onMounted(async () => {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 2rem;
-  color: white;
 }
 
 .back-btn, .add-entry-btn {
-  background: #8b4513;
+  background: var(--accent-color);
   color: white;
   padding: 0.75rem 1.5rem;
   text-decoration: none;
@@ -155,12 +153,11 @@ onMounted(async () => {
 }
 
 .back-btn:hover, .add-entry-btn:hover {
-  background: #654321;
+  background: #5a6268;
 }
 
 .header h1 {
   font-size: 2rem;
-  text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
 }
 
 .notebook-container {
@@ -208,7 +205,6 @@ onMounted(async () => {
 .date {
   font-weight: bold;
   font-size: 1.1rem;
-  color: #2c1810;
 }
 
 .lines {
@@ -235,14 +231,14 @@ onMounted(async () => {
   display: flex;
   gap: 1rem;
   align-items: center;
-  background: rgba(255,255,255,0.1);
+  background: white;
   padding: 1rem 2rem;
   border-radius: 8px;
-  backdrop-filter: blur(10px);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
 .navigation button {
-  background: #8b4513;
+  background: var(--accent-color);
   color: white;
   border: none;
   padding: 0.5rem 1rem;
@@ -252,7 +248,7 @@ onMounted(async () => {
 }
 
 .navigation button:hover:not(:disabled) {
-  background: #654321;
+  background: #5a6268;
 }
 
 .navigation button:disabled {
@@ -261,7 +257,6 @@ onMounted(async () => {
 }
 
 .page-info {
-  color: white;
   font-weight: 600;
   margin: 0 1rem;
 }

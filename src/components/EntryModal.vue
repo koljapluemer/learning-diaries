@@ -114,7 +114,6 @@ const submitEntry = async () => {
 
 .modal-header h3 {
   margin: 0;
-  color: #2c1810;
   font-size: 1.5rem;
 }
 
@@ -152,7 +151,6 @@ const submitEntry = async () => {
   display: block;
   margin-bottom: 0.5rem;
   font-weight: 600;
-  color: #2c1810;
 }
 
 .form-group input,
@@ -169,7 +167,7 @@ const submitEntry = async () => {
 .form-group input:focus,
 .form-group textarea:focus {
   outline: none;
-  border-color: #8b4513;
+  border-color: var(--accent-color);
 }
 
 .form-group textarea {
@@ -204,11 +202,11 @@ const submitEntry = async () => {
 }
 
 .save-btn {
-  background: #8b4513;
+  background: var(--accent-color);
   color: white;
 }
 
 .save-btn:hover {
-  background: #654321;
+  background: #5a6268;
 }
 </style>
