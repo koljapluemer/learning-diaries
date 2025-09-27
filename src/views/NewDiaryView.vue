@@ -124,12 +124,27 @@ import type { Diary } from '@/composables/useDiaries'
 const router = useRouter()
 const { createDiary: saveDiary } = useDiaries()
 
+const generateRandomColor = () => {
+  const colors = [
+    '#e74c3c', '#3498db', '#2ecc71', '#f39c12', '#9b59b6',
+    '#1abc9c', '#34495e', '#e67e22', '#95a5a6', '#f1c40f',
+    '#8e44ad', '#27ae60', '#c0392b', '#2980b9', '#d35400',
+    '#7f8c8d', '#16a085', '#2c3e50', '#f39800', '#8b4513'
+  ]
+  return colors[Math.floor(Math.random() * colors.length)]
+}
+
+const generateRandomFontColor = () => {
+  const colors = ['#ffffff', '#000000', '#2c3e50', '#ecf0f1', '#34495e', '#f8f9fa']
+  return colors[Math.floor(Math.random() * colors.length)]
+}
+
 const form = ref({
   title: '',
   minDays: 20,
   priority: 50,
-  color: '#8b4513',
-  fontColor: '#ffffff',
+  color: generateRandomColor(),
+  fontColor: generateRandomFontColor(),
   fontFamily: 'serif',
   fontSize: 14,
   bold: false,
