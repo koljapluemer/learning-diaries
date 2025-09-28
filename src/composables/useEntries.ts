@@ -10,8 +10,9 @@ export function useEntries() {
       .first()
 
     if (existingEntry) {
-      const updatedContent = existingEntry.content + '\n' + entryData.content
-      return await db.entries.update(existingEntry.id!, { content: updatedContent })
+      // Append new blocks to existing entry
+      const updatedBlocks = [...existingEntry.blocks, ...entryData.blocks]
+      return await db.entries.update(existingEntry.id!, { blocks: updatedBlocks })
     } else {
       return await db.entries.add(entryData)
     }

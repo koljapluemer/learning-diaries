@@ -13,14 +13,31 @@
             <div class="date">{{ currentPageDate }}</div>
           </div>
           <div class="page-content">
-            <div v-if="currentPageEntry" class="lines">
+            <div v-if="currentPageEntry" class="entry-blocks">
               <div
-                v-for="line in pageLines"
-                :key="line"
-                class="line"
-                :class="{ 'with-text': getLineContent(line) }"
+                v-for="(block, blockIndex) in currentPageEntry.blocks"
+                :key="blockIndex"
+                class="entry-block"
+                :class="`block-${block.type}`"
               >
-                {{ getLineContent(line) }}
+                <!-- Text Block -->
+                <div v-if="block.type === 'text'" class="text-block">
+                  <div
+                    v-for="(line, lineIndex) in getTextLines(block.content)"
+                    :key="lineIndex"
+                    class="line with-text"
+                  >
+                    {{ line }}
+                  </div>
+                </div>
+
+                <!-- Image Block -->
+                <div v-else-if="block.type === 'image'" class="image-block">
+                  <div class="image-container">
+                    <img :src="block.content" :alt="block.caption || 'Entry image'" class="entry-image" />
+                    <div v-if="block.caption" class="image-caption">{{ block.caption }}</div>
+                  </div>
+                </div>
               </div>
             </div>
             <div v-else class="empty-page">
@@ -96,10 +113,8 @@ const currentPageDate = computed(() => {
 
 const pageLines = computed(() => Array.from({ length: 25 }, (_, i) => i))
 
-const getLineContent = (lineIndex: number) => {
-  if (!currentPageEntry.value) return ''
-  const lines = currentPageEntry.value.content.split('\n')
-  return lines[lineIndex] || ''
+const getTextLines = (content: string) => {
+  return content.split('\n').filter(line => line.trim().length > 0)
 }
 
 const goToPage = (page: number) => {
@@ -225,6 +240,55 @@ onMounted(async () => {
 
 .empty-page {
   opacity: 0.5;
+}
+
+.entry-blocks {
+  line-height: 1.6;
+}
+
+.entry-block {
+  margin-bottom: 1.5rem;
+}
+
+.entry-block:last-child {
+  margin-bottom: 0;
+}
+
+.text-block .line {
+  min-height: 1.6em;
+  padding: 0.2rem 0;
+  margin-left: 2rem;
+  color: #333;
+}
+
+.image-block {
+  margin: 2rem 0;
+  text-align: center;
+  width: 100%;
+}
+
+.image-container {
+  display: inline-block;
+  max-width: calc(100% - 3rem);
+  margin: 0 auto;
+}
+
+.entry-image {
+  max-width: 100%;
+  max-height: 350px;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  display: block;
+  margin: 0 auto;
+}
+
+.image-caption {
+  margin-top: 0.75rem;
+  font-style: italic;
+  color: #666;
+  font-size: 0.9rem;
+  text-align: center;
+  padding: 0 1rem;
 }
 
 .navigation {

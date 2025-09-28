@@ -14,7 +14,21 @@ export interface Diary {
   createdAt: Date
 }
 
+export interface EntryBlock {
+  type: 'text' | 'image'
+  content: string // text content or base64 image data
+  caption?: string // optional caption for images
+}
+
 export interface Entry {
+  id?: number
+  diaryId: number
+  date: string
+  blocks: EntryBlock[]
+}
+
+// Legacy interface for migration
+export interface LegacyEntry {
   id?: number
   diaryId: number
   date: string
@@ -27,9 +41,35 @@ export class LearningDiariesDB extends Dexie {
 
   constructor() {
     super('LearningDiariesDB')
+
+    // Version 1: Original schema
     this.version(1).stores({
       diaries: '++id, title, createdAt',
       entries: '++id, diaryId, date'
+    })
+
+    // Version 2: Migrate entries to block-based structure
+    this.version(2).stores({
+      diaries: '++id, title, createdAt',
+      entries: '++id, diaryId, date'
+    }).upgrade(async tx => {
+      // Migrate existing entries from content string to blocks array
+      const entries = await tx.table('entries').toArray()
+
+      for (const entry of entries) {
+        const legacyEntry = entry as LegacyEntry
+        if (typeof legacyEntry.content === 'string') {
+          const migratedEntry: Entry = {
+            ...legacyEntry,
+            blocks: legacyEntry.content.trim()
+              ? [{ type: 'text', content: legacyEntry.content }]
+              : []
+          }
+          // Remove old content property and add blocks
+          delete (migratedEntry as unknown as Record<string, unknown>).content
+          await tx.table('entries').put(migratedEntry)
+        }
+      }
     })
   }
 }
