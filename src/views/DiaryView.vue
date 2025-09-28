@@ -1,5 +1,5 @@
 <template>
-  <div class="diary-view">
+  <div class="diary-view" :style="{ '--diary-color': diary?.color || '#ff6b6b' }">
     <div class="header">
       <router-link to="/" class="back-btn">← Back to Bookshelf</router-link>
       <h1>{{ diary?.title || 'Loading...' }}</h1>
@@ -12,7 +12,8 @@
           <div class="page-header" v-if="currentPageEntry">
             <div class="date">{{ currentPageDate }}</div>
           </div>
-          <div class="page-content">
+
+          <div class="page-content" :class="{ 'has-content': currentPageEntry }">
             <div v-if="currentPageEntry" class="entry-blocks">
               <div
                 v-for="(block, blockIndex) in currentPageEntry.blocks"
@@ -25,7 +26,7 @@
                   <div
                     v-for="(line, lineIndex) in getTextLines(block.content)"
                     :key="lineIndex"
-                    class="line with-text"
+                    class="content-line"
                   >
                     {{ line }}
                   </div>
@@ -40,21 +41,16 @@
                 </div>
               </div>
             </div>
-            <div v-else class="empty-page">
-              <div class="lines">
-                <div v-for="line in pageLines" :key="line" class="line"></div>
-              </div>
-            </div>
           </div>
         </div>
       </div>
 
       <div class="navigation">
-        <button @click="goToPage(0)" :disabled="currentPage === 0">First</button>
-        <button @click="goToPage(currentPage - 1)" :disabled="currentPage === 0">Previous</button>
+        <button @click="goToPage(0)" :disabled="currentPage === 0" class="nav-btn">First</button>
+        <button @click="goToPage(currentPage - 1)" :disabled="currentPage === 0" class="nav-btn">Previous</button>
         <span class="page-info">Page {{ currentPage + 1 }} of {{ totalPages }}</span>
-        <button @click="goToPage(currentPage + 1)" :disabled="currentPage >= totalPages - 1">Next</button>
-        <button @click="goToPage(totalPages - 1)" :disabled="currentPage >= totalPages - 1">Last</button>
+        <button @click="goToPage(currentPage + 1)" :disabled="currentPage >= totalPages - 1" class="nav-btn">Next</button>
+        <button @click="goToPage(totalPages - 1)" :disabled="currentPage >= totalPages - 1" class="nav-btn">Last</button>
       </div>
     </div>
 
@@ -111,7 +107,6 @@ const currentPageDate = computed(() => {
   return ''
 })
 
-const pageLines = computed(() => Array.from({ length: 25 }, (_, i) => i))
 
 const getTextLines = (content: string) => {
   return content.split('\n').filter(line => line.trim().length > 0)
