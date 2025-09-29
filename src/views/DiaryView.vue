@@ -64,14 +64,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { ref, computed, onMounted, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import EntryModal from '@/components/EntryModal.vue'
 import { useDiaries } from '@/composables/useDiaries'
 import { useEntries } from '@/composables/useEntries'
 import type { Diary, Entry } from '@/composables/useDiaries'
 
 const route = useRoute()
+const router = useRouter()
 const diaryId = Number(route.params.id)
 
 const { getDiary } = useDiaries()
@@ -79,25 +80,24 @@ const { getEntriesForDiary } = useEntries()
 
 const diary = ref<Diary | null>(null)
 const entries = ref<Entry[]>([])
-const currentPage = ref(0)
 const showEntryModal = ref(false)
-
-const totalPages = computed(() => {
-  if (!diary.value) return 0
-  const entryDates = entries.value.map(e => e.date)
-  const uniqueDates = new Set(entryDates)
-  return Math.max(20, uniqueDates.size)
-})
 
 const sortedEntries = computed(() => {
   return [...entries.value].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
 })
 
-const currentPageEntry = computed(() => {
-  if (currentPage.value < sortedEntries.value.length) {
-    return sortedEntries.value[currentPage.value]
+const totalPages = computed(() => sortedEntries.value.length)
+
+const currentPage = computed(() => {
+  const page = Number(route.query.page)
+  if (!isNaN(page) && page >= 0 && page < totalPages.value) {
+    return page
   }
-  return null
+  return Math.max(0, totalPages.value - 1)
+})
+
+const currentPageEntry = computed(() => {
+  return sortedEntries.value[currentPage.value] || null
 })
 
 const currentPageDate = computed(() => {
@@ -107,20 +107,20 @@ const currentPageDate = computed(() => {
   return ''
 })
 
-
 const getTextLines = (content: string) => {
   return content.split('\n').filter(line => line.trim().length > 0)
 }
 
 const goToPage = (page: number) => {
   if (page >= 0 && page < totalPages.value) {
-    currentPage.value = page
+    router.push({ query: { page: page.toString() } })
   }
 }
 
 const onEntryAdded = async () => {
   showEntryModal.value = false
   await loadEntries()
+  goToPage(totalPages.value - 1)
 }
 
 const loadEntries = async () => {
@@ -134,6 +134,9 @@ onMounted(async () => {
   if (foundDiary) {
     diary.value = foundDiary
     await loadEntries()
+    if (!route.query.page && totalPages.value > 0) {
+      router.replace({ query: { page: (totalPages.value - 1).toString() } })
+    }
   }
 })
 </script>
