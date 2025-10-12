@@ -79,9 +79,24 @@ const shuffleDiaries = (items: Diary[]) => {
   const shuffled = [...items]
   for (let i = shuffled.length - 1; i > 0; i -= 1) {
     const j = Math.floor(Math.random() * (i + 1))
-      ;[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+    ;[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
   }
   return shuffled
+}
+
+const shuffleInactiveWithBias = (items: Diary[]) => {
+  if (items.length <= 1) {
+    return [...items]
+  }
+
+  const scored = items.map(diary => {
+    const sizeScore = diary.width * 2 + diary.height
+    const noise = (Math.random() - 0.5) * sizeScore * 0.6
+    return { diary, score: sizeScore + noise }
+  })
+
+  scored.sort((a, b) => b.score - a.score)
+  return scored.map(entry => entry.diary)
 }
 
 const updateDiaryGroups = async (list: Diary[]) => {
@@ -130,7 +145,7 @@ const updateDiaryGroups = async (list: Diary[]) => {
   activeDiaries.value = recent
   inactiveDiaries.value = stale
   randomizedActiveDiaries.value = shuffleDiaries(recent)
-  randomizedInactiveDiaries.value = shuffleDiaries(stale)
+  randomizedInactiveDiaries.value = shuffleInactiveWithBias(stale)
 
   await nextTick()
   recalcLayout()
@@ -155,7 +170,13 @@ const recalcLayout = () => {
     return
   }
 
-  const inactiveLayouts: Array<{ left: number; bottom: number; width: number; thickness: number; zIndex: number }> = []
+  const inactiveLayouts: Array<{
+    left: number
+    bottom: number
+    width: number
+    thickness: number
+    zIndex: number
+  }> = []
   let stackHeight = 0
 
   if (inactive.length > 0) {
@@ -164,7 +185,12 @@ const recalcLayout = () => {
     inactive.forEach((diary, index) => {
       const coverWidth = Math.min(Math.max(diary.height, 1), containerWidth)
       const thickness = Math.max(diary.width, 1)
-      const left = Math.max((containerWidth - coverWidth) / 2, 0)
+      const centeredLeft = Math.max((containerWidth - coverWidth) / 2, 0)
+      const horizontalJitter = Math.random() * 50 - 25
+      const left = Math.min(
+        Math.max(centeredLeft + horizontalJitter, 0),
+        Math.max(containerWidth - coverWidth, 0)
+      )
       const bottom = currentHeight
       inactiveLayouts.push({
         left,
