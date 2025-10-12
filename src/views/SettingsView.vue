@@ -7,51 +7,28 @@
     </div>
 
     <div class="settings-container">
-      <!-- Google Drive Section -->
+      <!-- Dexie Cloud Sync Section -->
       <section class="settings-section">
-        <h2>Google Drive Backup</h2>
+        <h2>Cloud Sync</h2>
 
-        <div v-if="!authStatus.connected" class="auth-section">
-          <p>Connect your Google account to backup your learning diaries to Google Drive.</p>
-          <button @click="signIn" :disabled="isLoading" class="connect-btn">
-            {{ isLoading ? 'Connecting...' : 'Connect Google Drive' }}
+        <div v-if="!isLoggedIn" class="auth-section">
+          <p>Sign in to sync your learning diaries across devices.</p>
+          <button @click="handleLogin" :disabled="isLoading" class="connect-btn">
+            {{ isLoading ? 'Connecting...' : 'Sign In' }}
           </button>
         </div>
 
         <div v-else class="connected-section">
           <div class="account-info">
             <div class="account-details">
-              <p><strong>Connected as:</strong> {{ authStatus.email }}</p>
-              <p v-if="authStatus.lastBackup"><strong>Last backup:</strong> {{ authStatus.lastBackup }}</p>
-              <p v-else><strong>Last backup:</strong> Never</p>
+              <p><strong>Signed in as:</strong> {{ currentUser?.value?.email || 'User' }}</p>
+              <p><strong>Status:</strong> <span class="sync-status">{{ syncStatus }}</span></p>
             </div>
-            <button @click="signOut" :disabled="isLoading" class="disconnect-btn">
-              Disconnect
+            <button @click="handleLogout" :disabled="isLoading" class="disconnect-btn">
+              Sign Out
             </button>
           </div>
-
-          <div class="backup-controls">
-            <div class="manual-controls">
-              <button @click="backup" :disabled="isLoading" class="backup-btn">
-                {{ isLoading ? 'Backing up...' : 'Backup Now' }}
-              </button>
-              <button @click="restore" :disabled="isLoading" class="restore-btn">
-                {{ isLoading ? 'Restoring...' : 'Restore from Google Drive' }}
-              </button>
-            </div>
-
-            <div class="auto-backup-control">
-              <label class="toggle-label">
-                <input
-                  type="checkbox"
-                  v-model="autoBackupEnabled"
-                  @change="toggleAutoBackup"
-                  :disabled="isLoading"
-                />
-                <span class="toggle-text">Enable automatic daily backups</span>
-              </label>
-            </div>
-          </div>
+          <p class="sync-info">Your data syncs automatically across all your devices.</p>
         </div>
       </section>
 
@@ -105,20 +82,16 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { googleAuth } from '@/services/googleAuth'
-import { googleDrive } from '@/services/googleDrive'
+import { db } from '@/composables/useDiaries'
 import { backupService } from '@/services/backup'
 
 const router = useRouter()
 
-const authStatus = ref({
-  connected: false,
-  email: undefined as string | undefined,
-  lastBackup: undefined as string | undefined,
-  autoBackup: false
-})
+const currentUser = ref(db.cloud.currentUser)
+const currentUserId = ref(db.cloud.currentUserId)
+const isLoggedIn = computed(() => !!currentUserId.value)
 
 const stats = ref({
   diaries: 0,
@@ -127,10 +100,16 @@ const stats = ref({
 })
 
 const isLoading = ref(false)
-const autoBackupEnabled = ref(false)
 const statusMessage = ref('')
 const statusType = ref<'success' | 'error'>('success')
 const fileInput = ref<HTMLInputElement>()
+
+const syncStatus = computed(() => {
+  if (db.cloud.syncState?.value?.phase === 'error') return 'Error'
+  if (db.cloud.syncState?.value?.phase === 'pushing') return 'Syncing...'
+  if (db.cloud.syncState?.value?.phase === 'pulling') return 'Syncing...'
+  return 'Connected'
+})
 
 const showStatus = (message: string, type: 'success' | 'error' = 'success') => {
   statusMessage.value = message
@@ -138,21 +117,6 @@ const showStatus = (message: string, type: 'success' | 'error' = 'success') => {
   setTimeout(() => {
     statusMessage.value = ''
   }, 3000)
-}
-
-const loadAuthStatus = async () => {
-  try {
-    const status = await googleAuth.getStatus()
-    authStatus.value = {
-      connected: status.connected,
-      email: status.email,
-      lastBackup: status.lastBackup,
-      autoBackup: status.autoBackup || false
-    }
-    autoBackupEnabled.value = status.autoBackup || false
-  } catch (error) {
-    console.error('Failed to load auth status:', error)
-  }
 }
 
 const loadStats = async () => {
@@ -163,70 +127,31 @@ const loadStats = async () => {
   }
 }
 
-const signIn = async () => {
+const handleLogin = async () => {
   isLoading.value = true
   try {
-    await googleAuth.signIn()
-    await loadAuthStatus()
-    showStatus('Successfully connected to Google Drive')
+    await db.cloud.login()
+    currentUser.value = db.cloud.currentUser
+    currentUserId.value = db.cloud.currentUserId
+    showStatus('Successfully signed in')
   } catch (error) {
-    showStatus(`Failed to connect: ${error instanceof Error ? error.message : 'Unknown error'}`, 'error')
+    console.error('Login failed:', error)
+    showStatus(`Sign in failed: ${error instanceof Error ? error.message : 'Unknown error'}`, 'error')
   } finally {
     isLoading.value = false
   }
 }
 
-const signOut = async () => {
+const handleLogout = async () => {
   isLoading.value = true
   try {
-    await googleAuth.signOut()
-    await loadAuthStatus()
-    showStatus('Disconnected from Google Drive')
+    await db.cloud.logout()
+    showStatus('Signed out successfully')
   } catch (error) {
-    showStatus(`Failed to disconnect: ${error instanceof Error ? error.message : 'Unknown error'}`, 'error')
+    console.error('Logout failed:', error)
+    showStatus(`Sign out failed: ${error instanceof Error ? error.message : 'Unknown error'}`, 'error')
   } finally {
     isLoading.value = false
-  }
-}
-
-const backup = async () => {
-  isLoading.value = true
-  try {
-    await googleDrive.backup()
-    await loadAuthStatus()
-    showStatus('Backup completed successfully')
-  } catch (error) {
-    showStatus(`Backup failed: ${error instanceof Error ? error.message : 'Unknown error'}`, 'error')
-  } finally {
-    isLoading.value = false
-  }
-}
-
-const restore = async () => {
-  if (!confirm('This will replace all your current data with the backup from Google Drive. Are you sure?')) {
-    return
-  }
-
-  isLoading.value = true
-  try {
-    await googleDrive.restore()
-    await loadStats()
-    showStatus('Restore completed successfully')
-    router.push('/')
-  } catch (error) {
-    showStatus(`Restore failed: ${error instanceof Error ? error.message : 'Unknown error'}`, 'error')
-  } finally {
-    isLoading.value = false
-  }
-}
-
-const toggleAutoBackup = async () => {
-  try {
-    await googleAuth.updateAutoBackup(autoBackupEnabled.value)
-    showStatus(`Auto-backup ${autoBackupEnabled.value ? 'enabled' : 'disabled'}`)
-  } catch (error) {
-    showStatus(`Failed to update auto-backup: ${error instanceof Error ? error.message : 'Unknown error'}`, 'error')
-    autoBackupEnabled.value = !autoBackupEnabled.value
   }
 }
 
@@ -266,8 +191,10 @@ const importFromFile = async (event: Event) => {
   }
 }
 
+// Watch for user state changes (Dexie Cloud handles this reactively)
+
 onMounted(async () => {
-  await Promise.all([loadAuthStatus(), loadStats()])
+  await loadStats()
 })
 </script>
 
@@ -355,7 +282,7 @@ onMounted(async () => {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 2rem;
+  margin-bottom: 1rem;
   padding-bottom: 1rem;
   border-bottom: 1px solid var(--border-color);
 }
@@ -363,6 +290,17 @@ onMounted(async () => {
 .account-details p {
   margin-bottom: 0.5rem;
   color: #666;
+}
+
+.sync-status {
+  color: #28a745;
+  font-weight: 600;
+}
+
+.sync-info {
+  color: #666;
+  font-size: 0.9rem;
+  font-style: italic;
 }
 
 .disconnect-btn {
@@ -377,51 +315,6 @@ onMounted(async () => {
 
 .disconnect-btn:hover:not(:disabled) {
   background: #c82333;
-}
-
-.backup-controls {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.manual-controls {
-  display: flex;
-  gap: 1rem;
-  flex-wrap: wrap;
-}
-
-.backup-btn, .restore-btn {
-  background: var(--accent-color);
-  color: white;
-  border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background 0.3s ease;
-}
-
-.backup-btn:hover:not(:disabled), .restore-btn:hover:not(:disabled) {
-  background: #5a6268;
-}
-
-.restore-btn {
-  background: #28a745;
-}
-
-.restore-btn:hover:not(:disabled) {
-  background: #218838;
-}
-
-.toggle-label {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  cursor: pointer;
-}
-
-.toggle-text {
-  color: #666;
 }
 
 .stats-grid {
@@ -505,10 +398,6 @@ button:disabled {
   .account-info {
     flex-direction: column;
     gap: 1rem;
-  }
-
-  .manual-controls {
-    flex-direction: column;
   }
 
   .local-backup-controls {

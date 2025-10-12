@@ -44,10 +44,10 @@ export class LearningDiariesDB extends Dexie {
 
 export const db = new LearningDiariesDB()
 
-// Configure Dexie Cloud (placeholder URL - replace with your actual database URL)
+// Configure Dexie Cloud
 db.cloud.configure({
-  databaseUrl: 'https://your-database.dexie.cloud',
-  requireAuth: false // Set to true when you want to require authentication
+  databaseUrl: import.meta.env.VITE_DEXIE_CLOUD_URL,
+  requireAuth: false // Allows offline-first usage
 })
 
 export function useDiaries() {
