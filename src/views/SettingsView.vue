@@ -21,7 +21,7 @@
         <div v-else class="connected-section">
           <div class="account-info">
             <div class="account-details">
-              <p><strong>Signed in as:</strong> {{ currentUser?.value?.email || 'User' }}</p>
+              <p><strong>Signed in as:</strong> {{ currentUser?.email || 'User' }}</p>
               <p><strong>Status:</strong> <span class="sync-status">{{ syncStatus }}</span></p>
             </div>
             <button @click="handleLogout" :disabled="isLoading" class="disconnect-btn fire-button fire-button--small">
@@ -82,15 +82,26 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { db } from '@/composables/useDiaries'
 import { backupService } from '@/services/backup'
+import type { UserLogin, SyncState } from 'dexie-cloud-addon'
+import type { BehaviorSubject, Subscription } from 'rxjs'
 
 const router = useRouter()
 
-const currentUser = ref(db.cloud.currentUser)
-const currentUserId = ref(db.cloud.currentUserId)
+type CloudAuthStreams = {
+  currentUser: BehaviorSubject<UserLogin | null>
+  syncState: BehaviorSubject<SyncState>
+}
+
+const cloud = db.cloud as typeof db.cloud & CloudAuthStreams
+
+type CloudUser = UserLogin | null
+
+const currentUser = ref<CloudUser>(cloud.currentUser?.value ?? null)
+const currentUserId = ref<string | null>(currentUser.value?.userId ?? null)
 const isLoggedIn = computed(() => !!currentUserId.value)
 
 const stats = ref({
@@ -105,11 +116,28 @@ const statusType = ref<'success' | 'error'>('success')
 const fileInput = ref<HTMLInputElement>()
 
 const syncStatus = computed(() => {
-  if (db.cloud.syncState?.value?.phase === 'error') return 'Error'
-  if (db.cloud.syncState?.value?.phase === 'pushing') return 'Syncing...'
-  if (db.cloud.syncState?.value?.phase === 'pulling') return 'Syncing...'
+  const phase = cloud.syncState?.value?.phase
+  if (phase === 'error') return 'Error'
+  if (phase === 'pushing' || phase === 'pulling' || phase === 'not-in-sync') return 'Syncing...'
+  if (phase === 'offline') return 'Offline'
   return 'Connected'
 })
+
+const refreshAuthState = () => {
+  currentUser.value = cloud.currentUser?.value ?? null
+  currentUserId.value = currentUser.value?.userId ?? null
+}
+
+const subscriptions: Subscription[] = []
+
+const subscribeToAuth = () => {
+  subscriptions.push(
+    cloud.currentUser.subscribe(user => {
+      currentUser.value = user ?? null
+      currentUserId.value = user?.userId ?? null
+    })
+  )
+}
 
 const showStatus = (message: string, type: 'success' | 'error' = 'success') => {
   statusMessage.value = message
@@ -130,9 +158,8 @@ const loadStats = async () => {
 const handleLogin = async () => {
   isLoading.value = true
   try {
-    await db.cloud.login()
-    currentUser.value = db.cloud.currentUser
-    currentUserId.value = db.cloud.currentUserId
+    await cloud.login()
+    refreshAuthState()
     showStatus('Successfully signed in')
   } catch (error) {
     console.error('Login failed:', error)
@@ -145,7 +172,8 @@ const handleLogin = async () => {
 const handleLogout = async () => {
   isLoading.value = true
   try {
-    await db.cloud.logout()
+    await cloud.logout()
+    refreshAuthState()
     showStatus('Signed out successfully')
   } catch (error) {
     console.error('Logout failed:', error)
@@ -194,7 +222,13 @@ const importFromFile = async (event: Event) => {
 // Watch for user state changes (Dexie Cloud handles this reactively)
 
 onMounted(async () => {
+  refreshAuthState()
+  subscribeToAuth()
   await loadStats()
+})
+
+onBeforeUnmount(() => {
+  subscriptions.forEach(sub => sub.unsubscribe())
 })
 </script>
 
