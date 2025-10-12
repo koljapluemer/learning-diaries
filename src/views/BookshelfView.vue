@@ -12,10 +12,31 @@
       '--bookcase-min-height': `${MIN_BOOKSHELF_HEIGHT}px`,
       height: `${bookshelfHeight}px`
     }">
-      <div v-for="(diary, index) in randomizedDiaries" :key="diary.id ?? `diary-${index}`" class="book-slot"
-        :style="bookLayouts[index] ? { left: `${bookLayouts[index].left}px`, bottom: `${bookLayouts[index].bottom}px` } : {}">
+      <div v-for="(diary, index) in randomizedActiveDiaries" :key="diary.id ?? `active-${index}`" class="book-slot"
+        :style="activeBookLayouts[index]
+          ? {
+            left: `${activeBookLayouts[index].left}px`,
+            bottom: `${activeBookLayouts[index].bottom}px`
+          }
+          : {}">
         <BookSpine :diary="diary" @click="openDiary(diary.id)" />
       </div>
+      <div v-for="(diary, index) in randomizedInactiveDiaries" :key="diary.id ?? `inactive-${index}`" class="book-flat"
+        @click="openDiary(diary.id)" :style="inactiveBookLayouts[index]
+          ? {
+            left: `${inactiveBookLayouts[index].left}px`,
+            bottom: `${inactiveBookLayouts[index].bottom}px`,
+            width: `${inactiveBookLayouts[index].width}px`,
+            height: `${inactiveBookLayouts[index].thickness}px`,
+            backgroundColor: diary.color,
+            color: diary.fontColor,
+            zIndex: inactiveBookLayouts[index].zIndex
+          }
+          : {}">
+        <span class="book-flat-title">{{ diary.title }}</span>
+      </div>
+      <div v-if="inactiveShelfBottom !== null" class="shelf shelf-inactive"
+        :style="{ bottom: `${inactiveShelfBottom}px` }" />
       <div v-for="(shelfBottom, index) in shelfPositions" :key="`shelf-${index}`" class="shelf"
         :style="{ bottom: `${shelfBottom}px` }" />
     </div>
@@ -27,22 +48,32 @@ import { onBeforeUnmount, onMounted, nextTick, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import BookSpine from '@/components/BookSpine.vue'
 import { useDiaries } from '@/composables/useDiaries'
+import { useEntries } from '@/composables/useEntries'
 import type { Diary } from '@/composables/useDiaries'
 
 const SHELF_THICKNESS = 28
 const SHELF_GAP = 48
-const BOOK_GAP = 0
 const MIN_BOOKSHELF_HEIGHT = 320
+const RECENT_WINDOW_MS = 7 * 7 * 24 * 60 * 60 * 1000
+const INACTIVE_STACK_GAP = 72
 
 const router = useRouter()
 const { getAllDiaries } = useDiaries()
+const { getEntriesForDiary } = useEntries()
+
 const diaries = ref<Diary[]>([])
-const randomizedDiaries = ref<Diary[]>([])
-const bookLayouts = ref<Array<{ left: number; bottom: number }>>([])
+const activeDiaries = ref<Diary[]>([])
+const inactiveDiaries = ref<Diary[]>([])
+const randomizedActiveDiaries = ref<Diary[]>([])
+const randomizedInactiveDiaries = ref<Diary[]>([])
+const activeBookLayouts = ref<Array<{ left: number; bottom: number }>>([])
+const inactiveBookLayouts = ref<Array<{ left: number; bottom: number; width: number; thickness: number; zIndex: number }>>([])
 const shelfPositions = ref<number[]>([])
+const inactiveShelfBottom = ref<number | null>(null)
 const bookshelfHeight = ref(MIN_BOOKSHELF_HEIGHT)
 const bookshelfRef = ref<HTMLElement | null>(null)
 let resizeObserver: ResizeObserver | null = null
+let groupingToken = 0
 
 const shuffleDiaries = (items: Diary[]) => {
   const shuffled = [...items]
@@ -53,13 +84,68 @@ const shuffleDiaries = (items: Diary[]) => {
   return shuffled
 }
 
+const updateDiaryGroups = async (list: Diary[]) => {
+  const token = ++groupingToken
+
+  if (list.length === 0) {
+    activeDiaries.value = []
+    inactiveDiaries.value = []
+    randomizedActiveDiaries.value = []
+    randomizedInactiveDiaries.value = []
+    await nextTick()
+    recalcLayout()
+    return
+  }
+
+  const now = Date.now()
+  const cutoff = now - RECENT_WINDOW_MS
+
+  const groups = await Promise.all(list.map(async (diary) => {
+    if (!diary.id) {
+      return { diary, isRecent: false }
+    }
+
+    const entries = await getEntriesForDiary(diary.id)
+    const latestTimestamp = entries.reduce((latest, entry) => {
+      const timestamp = Date.parse(entry.date)
+      if (Number.isNaN(timestamp)) {
+        return latest
+      }
+      return Math.max(latest, timestamp)
+    }, Number.NEGATIVE_INFINITY)
+
+    return {
+      diary,
+      isRecent: latestTimestamp >= cutoff
+    }
+  }))
+
+  if (token !== groupingToken) {
+    return
+  }
+
+  const recent = groups.filter(group => group.isRecent).map(group => group.diary)
+  const stale = groups.filter(group => !group.isRecent).map(group => group.diary)
+
+  activeDiaries.value = recent
+  inactiveDiaries.value = stale
+  randomizedActiveDiaries.value = shuffleDiaries(recent)
+  randomizedInactiveDiaries.value = shuffleDiaries(stale)
+
+  await nextTick()
+  recalcLayout()
+}
+
 const recalcLayout = () => {
   const container = bookshelfRef.value
-  const diariesList = randomizedDiaries.value
+  const active = randomizedActiveDiaries.value
+  const inactive = randomizedInactiveDiaries.value
 
-  if (!container || diariesList.length === 0) {
-    bookLayouts.value = []
+  if (!container) {
+    activeBookLayouts.value = []
+    inactiveBookLayouts.value = []
     shelfPositions.value = []
+    inactiveShelfBottom.value = null
     bookshelfHeight.value = MIN_BOOKSHELF_HEIGHT
     return
   }
@@ -69,56 +155,80 @@ const recalcLayout = () => {
     return
   }
 
-  const positions: Array<{ left: number; bottom: number }> = new Array(diariesList.length)
-  const shelves: Array<{ base: number; height: number }> = []
+  const inactiveLayouts: Array<{ left: number; bottom: number; width: number; thickness: number; zIndex: number }> = []
+  let stackHeight = 0
 
-  let shelfIndex = 0
-  let currentX = 0
-  let currentBase = 0
+  if (inactive.length > 0) {
+    let currentHeight = SHELF_THICKNESS
 
-  shelves[0] = { base: currentBase, height: 0 }
+    inactive.forEach((diary, index) => {
+      const coverWidth = Math.min(Math.max(diary.height, 1), containerWidth)
+      const thickness = Math.max(diary.width, 1)
+      const left = Math.max((containerWidth - coverWidth) / 2, 0)
+      const bottom = currentHeight
+      inactiveLayouts.push({
+        left,
+        bottom,
+        width: coverWidth,
+        thickness,
+        zIndex: 10 + index
+      })
+      currentHeight += thickness
+    })
 
-  diariesList.forEach((diary, index) => {
-    const bookWidth = Math.max(diary.width, 1)
-    const bookHeight = Math.max(diary.height, 1)
-
-    if (currentX > 0 && currentX + bookWidth > containerWidth) {
-      currentBase += shelves[shelfIndex].height + SHELF_THICKNESS + SHELF_GAP
-      shelfIndex += 1
-      currentX = 0
-      shelves[shelfIndex] = { base: currentBase, height: 0 }
-    }
-
-    const shelf = shelves[shelfIndex]
-    shelf.height = Math.max(shelf.height, bookHeight)
-
-    positions[index] = {
-      left: currentX,
-      bottom: shelf.base + SHELF_THICKNESS
-    }
-
-    currentX += bookWidth + BOOK_GAP
-  })
-
-  const populatedShelves = shelves.slice(0, shelfIndex + 1)
-  shelfPositions.value = populatedShelves.map(({ base }) => base)
-
-  const lastShelf = populatedShelves[populatedShelves.length - 1]
-  if (lastShelf) {
-    const computedHeight = lastShelf.base + lastShelf.height + SHELF_THICKNESS
-    bookshelfHeight.value = Math.max(computedHeight, MIN_BOOKSHELF_HEIGHT)
+    stackHeight = currentHeight
+    inactiveShelfBottom.value = 0
   } else {
-    bookshelfHeight.value = MIN_BOOKSHELF_HEIGHT
+    inactiveShelfBottom.value = null
   }
 
-  bookLayouts.value = positions
+  inactiveBookLayouts.value = inactiveLayouts
+
+  const positions: Array<{ left: number; bottom: number }> = new Array(active.length)
+  const shelves: Array<{ base: number; height: number }> = []
+
+  if (active.length > 0) {
+    let currentX = 0
+    let currentBase = stackHeight > 0 ? stackHeight + INACTIVE_STACK_GAP : 0
+
+    shelves.push({ base: currentBase, height: 0 })
+
+    active.forEach((diary, index) => {
+      const bookWidth = Math.max(diary.width, 1)
+      const bookHeight = Math.max(diary.height, 1)
+
+      if (currentX > 0 && currentX + bookWidth > containerWidth) {
+        const lastShelf = shelves[shelves.length - 1]
+        currentBase += lastShelf.height + SHELF_THICKNESS + SHELF_GAP
+        currentX = 0
+        shelves.push({ base: currentBase, height: 0 })
+      }
+
+      const shelf = shelves[shelves.length - 1]
+      shelf.height = Math.max(shelf.height, bookHeight)
+
+      positions[index] = {
+        left: currentX,
+        bottom: shelf.base + SHELF_THICKNESS
+      }
+
+      currentX += bookWidth
+    })
+  }
+
+  shelfPositions.value = shelves.map(({ base }) => base)
+
+  const lastShelf = shelves.length > 0 ? shelves[shelves.length - 1] : null
+  const activeHeight = lastShelf ? lastShelf.base + lastShelf.height + SHELF_THICKNESS : 0
+
+  const totalHeight = Math.max(activeHeight, stackHeight)
+  bookshelfHeight.value = Math.max(totalHeight, MIN_BOOKSHELF_HEIGHT)
+  activeBookLayouts.value = positions
 }
 
 onMounted(async () => {
   diaries.value = await getAllDiaries()
-  randomizedDiaries.value = shuffleDiaries(diaries.value)
-  await nextTick()
-  recalcLayout()
+  await updateDiaryGroups(diaries.value)
 
   if (bookshelfRef.value) {
     resizeObserver = new ResizeObserver(() => {
@@ -136,13 +246,11 @@ onBeforeUnmount(() => {
   window.removeEventListener('orientationchange', recalcLayout)
 })
 
-watch(diaries, async (value) => {
-  randomizedDiaries.value = shuffleDiaries(value)
-  await nextTick()
-  recalcLayout()
+watch(diaries, (value) => {
+  void updateDiaryGroups(value)
 })
 
-watch(randomizedDiaries, async () => {
+watch([randomizedActiveDiaries, randomizedInactiveDiaries], async () => {
   await nextTick()
   recalcLayout()
 })
@@ -215,6 +323,33 @@ const openDiary = (diaryId: string | undefined) => {
   transform: translateY(4px);
 }
 
+.book-flat {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 2px;
+  box-shadow:
+    inset 0 2px 3px rgba(255, 255, 255, 0.45),
+    inset 0 -3px 6px rgba(0, 0, 0, 0.35),
+    0 8px 18px rgba(0, 0, 0, 0.4);
+  padding: 0 18px;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.book-flat:hover {
+  transform: translateY(-4px);
+}
+
+.book-flat-title {
+  font-weight: 600;
+  text-align: center;
+  line-height: 1.2;
+  word-break: break-word;
+  user-select: none;
+}
+
 .shelf {
   position: absolute;
   left: 0;
@@ -228,5 +363,9 @@ const openDiary = (diaryId: string | undefined) => {
     inset 0 -2px 4px rgba(0, 0, 0, 0.35),
     0 12px 20px rgba(0, 0, 0, 0.25);
   z-index: 1;
+}
+
+.shelf-inactive {
+  filter: saturate(0.85) brightness(0.9);
 }
 </style>
