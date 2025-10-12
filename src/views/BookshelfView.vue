@@ -180,13 +180,39 @@ const recalcLayout = () => {
   let stackHeight = 0
 
   if (inactive.length > 0) {
-    let currentHeight = SHELF_THICKNESS
+    const sortedInactive = [...inactive]
+    if (sortedInactive.length > 1) {
+      let widestIndex = 0
+      let widestWidth = -Infinity
+      sortedInactive.forEach((diary, index) => {
+        if (diary.height > widestWidth) {
+          widestWidth = diary.height
+          widestIndex = index
+        }
+      })
+      if (widestIndex !== 0) {
+        const [baseDiary] = sortedInactive.splice(widestIndex, 1)
+        sortedInactive.unshift(baseDiary)
+      }
+    }
 
-    inactive.forEach((diary, index) => {
+    let currentHeight = SHELF_THICKNESS
+    let baseCenter = 0
+
+    sortedInactive.forEach((diary, index) => {
       const coverWidth = Math.min(Math.max(diary.height, 1), containerWidth)
       const thickness = Math.max(diary.width, 1)
-      const horizontalJitter = Math.random() * 40 - 10
-      const left = Math.min(Math.max(horizontalJitter, 0), Math.max(containerWidth - coverWidth, 0))
+      let left: number
+
+      if (index === 0) {
+        left = 0
+        baseCenter = coverWidth / 2
+      } else {
+        const jitter = Math.random() * 40 - 20
+        const centeredLeft = baseCenter - coverWidth / 2 + jitter
+        left = Math.min(Math.max(centeredLeft, 0), Math.max(containerWidth - coverWidth, 0))
+      }
+
       const bottom = currentHeight
       inactiveLayouts.push({
         left,
