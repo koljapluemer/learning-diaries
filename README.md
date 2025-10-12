@@ -1,10 +1,11 @@
-# Learning Diaries
+![Screenshot](screenshot.png)
 
-A beautiful, offline-first web application for creating and managing digital learning journals. Each diary is represented as a book on a virtual bookshelf, with entries displayed as pages in a notebook.
+# Learning Diaries
 
 ## Features
 
 ### Core Functionality
+
 - **Multiple Diaries**: Create unlimited learning diaries, each with customizable appearance
 - **Rich Entries**: Add journal entries with text and images, organized chronologically
 - **Customizable Design**: Personalize each diary with custom colors, fonts, sizes, and styles
@@ -12,6 +13,7 @@ A beautiful, offline-first web application for creating and managing digital lea
 - **Notebook Interface**: Read entries as pages in a realistic notebook with date headers and navigation
 
 ### Data Management
+
 - **Offline-First**: All data stored locally using IndexedDB (Dexie.js)
 - **Google Drive Backup**: Optional cloud backup integration
   - Manual backup and restore
@@ -21,6 +23,7 @@ A beautiful, offline-first web application for creating and managing digital lea
 - **Data Statistics**: View counts of diaries, entries, and database size
 
 ### Entry Features
+
 - **Block-Based Content**: Entries support multiple content blocks
   - Text blocks with multi-line support
   - Image blocks with optional captions (base64 encoded)
@@ -109,6 +112,7 @@ npm run format
 ## Database Schema
 
 ### Diaries Table
+
 - `id`: Auto-increment primary key
 - `title`: String
 - `width`: Number (pixels)
@@ -122,6 +126,7 @@ npm run format
 - `createdAt`: Date
 
 ### Entries Table
+
 - `id`: Auto-increment primary key
 - `diaryId`: Number (foreign key)
 - `date`: String (YYYY-MM-DD format)
@@ -147,6 +152,7 @@ The app includes automatic schema migration from v1 (string-based content) to v2
 ## Browser Support
 
 Works in all modern browsers that support:
+
 - IndexedDB
 - ES6+ JavaScript
 - CSS Grid and Flexbox
