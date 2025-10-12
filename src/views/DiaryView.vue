@@ -1,9 +1,9 @@
 <template>
   <div class="diary-view" :style="{ '--diary-color': diary?.color || '#ff6b6b' }">
     <div class="header">
-      <router-link to="/" class="back-btn">← Back to Bookshelf</router-link>
-      <h1>{{ diary?.title || 'Loading...' }}</h1>
-      <button @click="showEntryModal = true" class="add-entry-btn">Add Entry</button>
+      <router-link to="/" class="back-btn fire-button fire-button--small">← Back to Bookshelf</router-link>
+      <h1 class="fire-heading fire-heading--md">{{ diary?.title || 'Loading...' }}</h1>
+      <button @click="showEntryModal = true" class="add-entry-btn fire-button">Add Entry</button>
     </div>
 
     <div class="notebook-container">
@@ -46,11 +46,11 @@
       </div>
 
       <div class="navigation">
-        <button @click="goToPage(0)" :disabled="currentPage === 0" class="nav-btn">First</button>
-        <button @click="goToPage(currentPage - 1)" :disabled="currentPage === 0" class="nav-btn">Previous</button>
+        <button @click="goToPage(0)" :disabled="currentPage === 0" class="nav-btn fire-button fire-button--small">First</button>
+        <button @click="goToPage(currentPage - 1)" :disabled="currentPage === 0" class="nav-btn fire-button fire-button--small">Previous</button>
         <span class="page-info">Page {{ currentPage + 1 }} of {{ totalPages }}</span>
-        <button @click="goToPage(currentPage + 1)" :disabled="currentPage >= totalPages - 1" class="nav-btn">Next</button>
-        <button @click="goToPage(totalPages - 1)" :disabled="currentPage >= totalPages - 1" class="nav-btn">Last</button>
+        <button @click="goToPage(currentPage + 1)" :disabled="currentPage >= totalPages - 1" class="nav-btn fire-button fire-button--small">Next</button>
+        <button @click="goToPage(totalPages - 1)" :disabled="currentPage >= totalPages - 1" class="nav-btn fire-button fire-button--small">Last</button>
       </div>
     </div>
 
@@ -152,25 +152,6 @@ onMounted(async () => {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 2rem;
-}
-
-.back-btn, .add-entry-btn {
-  background: var(--accent-color);
-  color: white;
-  padding: 0.75rem 1.5rem;
-  text-decoration: none;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background 0.3s ease;
-}
-
-.back-btn:hover, .add-entry-btn:hover {
-  background: #5a6268;
-}
-
-.header h1 {
-  font-size: 2rem;
 }
 
 .notebook-container {
@@ -297,25 +278,6 @@ onMounted(async () => {
   padding: 1rem 2rem;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
-
-.navigation button {
-  background: var(--accent-color);
-  color: white;
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background 0.3s ease;
-}
-
-.navigation button:hover:not(:disabled) {
-  background: #5a6268;
-}
-
-.navigation button:disabled {
-  background: #666;
-  cursor: not-allowed;
 }
 
 .page-info {

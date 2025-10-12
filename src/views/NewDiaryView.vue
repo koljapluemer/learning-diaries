@@ -1,7 +1,7 @@
 <template>
   <div class="new-diary-view">
     <div class="container">
-      <h1>Create New Learning Diary</h1>
+      <h1 class="fire-heading fire-heading--md">Create New Learning Diary</h1>
 
       <div class="form-preview-layout">
         <form @submit.prevent="createDiary" class="diary-form">
@@ -101,8 +101,8 @@
           </div>
 
           <div class="form-actions">
-            <router-link to="/" class="cancel-btn">Cancel</router-link>
-            <button type="submit" class="create-btn">Create Diary</button>
+            <router-link to="/" class="cancel-btn fire-button fire-button--small">Cancel</router-link>
+            <button type="submit" class="create-btn fire-button">Create Diary</button>
           </div>
         </form>
 
@@ -308,34 +308,6 @@ small {
   gap: 1rem;
   justify-content: flex-end;
   margin-top: 2rem;
-}
-
-.cancel-btn, .create-btn {
-  padding: 0.75rem 1.5rem;
-  border-radius: 6px;
-  text-decoration: none;
-  font-weight: 600;
-  transition: all 0.3s ease;
-}
-
-.cancel-btn {
-  background: #6c757d;
-  color: white;
-}
-
-.cancel-btn:hover {
-  background: #5a6268;
-}
-
-.create-btn {
-  background: var(--accent-color);
-  color: white;
-  border: none;
-  cursor: pointer;
-}
-
-.create-btn:hover {
-  background: #5a6268;
 }
 
 .preview-section {

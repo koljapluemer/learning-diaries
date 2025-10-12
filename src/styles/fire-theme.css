@@ -1,0 +1,88 @@
+.fire-heading {
+  display: inline-block;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.12rem;
+  background: linear-gradient(180deg, #ffe066 0%, #ff922b 40%, #e03131 75%, #7f1d1d 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow:
+    0 0 6px rgba(255, 204, 0, 0.8),
+    0 0 18px rgba(255, 82, 37, 0.6),
+    0 0 32px rgba(255, 0, 0, 0.35);
+}
+
+.fire-heading--lg {
+  font-size: 2.75rem;
+}
+
+.fire-heading--md {
+  font-size: 2.25rem;
+}
+
+.fire-heading--sm {
+  font-size: 1.75rem;
+}
+
+.fire-button {
+  --fire-btn-gradient: linear-gradient(135deg, #ffe066 0%, #ff922b 35%, #fa5252 65%, #862e9c 100%);
+  --fire-btn-shadow: 0 0 12px rgba(255, 135, 0, 0.6), 0 8px 18px rgba(0, 0, 0, 0.35);
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.75rem 1.75rem;
+  border-radius: 999px;
+  font-weight: 700;
+  letter-spacing: 0.04rem;
+  text-transform: uppercase;
+  color: #fff4e6;
+  background: var(--fire-btn-gradient);
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  box-shadow: var(--fire-btn-shadow);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    filter 0.2s ease;
+}
+
+.fire-button::after {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0));
+  pointer-events: none;
+}
+
+.fire-button:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow:
+    0 0 16px rgba(255, 167, 0, 0.75),
+    0 12px 26px rgba(0, 0, 0, 0.4);
+}
+
+.fire-button:disabled,
+.fire-button[aria-disabled='true'] {
+  opacity: 0.75;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: 0 0 8px rgba(150, 150, 150, 0.35);
+}
+
+.fire-button--small {
+  padding: 0.45rem 1.1rem;
+  font-size: 0.9rem;
+}
+
+.fire-button--block {
+  width: 100%;
+}
+
+a.fire-button {
+  text-decoration: none;
+}

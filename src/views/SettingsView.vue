@@ -1,8 +1,8 @@
 <template>
   <div class="settings-view">
     <div class="header">
-      <router-link to="/" class="back-btn">← Back to Bookshelf</router-link>
-      <h1>Settings</h1>
+      <router-link to="/" class="back-btn fire-button fire-button--small">← Back to Bookshelf</router-link>
+      <h1 class="fire-heading fire-heading--md">Settings</h1>
       <div></div>
     </div>
 
@@ -13,7 +13,7 @@
 
         <div v-if="!isLoggedIn" class="auth-section">
           <p>Sign in to sync your learning diaries across devices.</p>
-          <button @click="handleLogin" :disabled="isLoading" class="connect-btn">
+          <button @click="handleLogin" :disabled="isLoading" class="connect-btn fire-button">
             {{ isLoading ? 'Connecting...' : 'Sign In' }}
           </button>
         </div>
@@ -24,7 +24,7 @@
               <p><strong>Signed in as:</strong> {{ currentUser?.value?.email || 'User' }}</p>
               <p><strong>Status:</strong> <span class="sync-status">{{ syncStatus }}</span></p>
             </div>
-            <button @click="handleLogout" :disabled="isLoading" class="disconnect-btn">
+            <button @click="handleLogout" :disabled="isLoading" class="disconnect-btn fire-button fire-button--small">
               Sign Out
             </button>
           </div>
@@ -55,7 +55,7 @@
       <section class="settings-section">
         <h2>Local Backup</h2>
         <div class="local-backup-controls">
-          <button @click="exportToFile" :disabled="isLoading" class="export-btn">
+          <button @click="exportToFile" :disabled="isLoading" class="export-btn fire-button">
             Export to File
           </button>
           <div class="import-section">
@@ -66,7 +66,7 @@
               @change="importFromFile"
               style="display: none"
             />
-            <button @click="fileInput?.click()" :disabled="isLoading" class="import-btn">
+            <button @click="fileInput?.click()" :disabled="isLoading" class="import-btn fire-button">
               Import from File
             </button>
           </div>
@@ -211,23 +211,6 @@ onMounted(async () => {
   margin-bottom: 2rem;
 }
 
-.back-btn {
-  background: var(--accent-color);
-  color: white;
-  padding: 0.75rem 1.5rem;
-  text-decoration: none;
-  border-radius: 6px;
-  transition: background 0.3s ease;
-}
-
-.back-btn:hover {
-  background: #5a6268;
-}
-
-.header h1 {
-  font-size: 2rem;
-}
-
 .settings-container {
   max-width: 800px;
   margin: 0 auto;
@@ -258,26 +241,6 @@ onMounted(async () => {
   color: #666;
 }
 
-.connect-btn {
-  background: #4285f4;
-  color: white;
-  border: none;
-  padding: 0.75rem 2rem;
-  border-radius: 6px;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: background 0.3s ease;
-}
-
-.connect-btn:hover:not(:disabled) {
-  background: #357ae8;
-}
-
-.connect-btn:disabled {
-  background: #ccc;
-  cursor: not-allowed;
-}
-
 .account-info {
   display: flex;
   justify-content: space-between;
@@ -301,20 +264,6 @@ onMounted(async () => {
   color: #666;
   font-size: 0.9rem;
   font-style: italic;
-}
-
-.disconnect-btn {
-  background: #dc3545;
-  color: white;
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background 0.3s ease;
-}
-
-.disconnect-btn:hover:not(:disabled) {
-  background: #c82333;
 }
 
 .stats-grid {
@@ -350,20 +299,6 @@ onMounted(async () => {
   flex-wrap: wrap;
 }
 
-.export-btn, .import-btn {
-  background: var(--accent-color);
-  color: white;
-  border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background 0.3s ease;
-}
-
-.export-btn:hover:not(:disabled), .import-btn:hover:not(:disabled) {
-  background: #5a6268;
-}
-
 .import-section {
   display: flex;
   align-items: center;
@@ -387,11 +322,6 @@ onMounted(async () => {
 
 .status-message.error {
   background: #dc3545;
-}
-
-button:disabled {
-  background: #ccc !important;
-  cursor: not-allowed !important;
 }
 
 @media (max-width: 768px) {
