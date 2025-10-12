@@ -18,11 +18,11 @@ export function useEntries() {
     }
   }
 
-  const getEntriesForDiary = async (diaryId: number): Promise<Entry[]> => {
+  const getEntriesForDiary = async (diaryId: string): Promise<Entry[]> => {
     return await db.entries.where('diaryId').equals(diaryId).toArray()
   }
 
-  const getEntry = async (diaryId: number, date: string): Promise<Entry | undefined> => {
+  const getEntry = async (diaryId: string, date: string): Promise<Entry | undefined> => {
     return await db.entries
       .where('diaryId')
       .equals(diaryId)

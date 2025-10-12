@@ -158,9 +158,9 @@ class BackupService {
     const obj = entry as Record<string, unknown>
 
     return (
-      typeof obj.diaryId === 'number' &&
+      typeof obj.diaryId === 'string' &&
       typeof obj.date === 'string' &&
-      typeof obj.content === 'string'
+      Array.isArray(obj.blocks)
     )
   }
 }

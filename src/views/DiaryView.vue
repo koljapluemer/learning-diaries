@@ -64,7 +64,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import EntryModal from '@/components/EntryModal.vue'
 import { useDiaries } from '@/composables/useDiaries'
@@ -73,7 +73,7 @@ import type { Diary, Entry } from '@/composables/useDiaries'
 
 const route = useRoute()
 const router = useRouter()
-const diaryId = Number(route.params.id)
+const diaryId = route.params.id as string
 
 const { getDiary } = useDiaries()
 const { getEntriesForDiary } = useEntries()

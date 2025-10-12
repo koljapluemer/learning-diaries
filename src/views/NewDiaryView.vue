@@ -155,7 +155,7 @@ const form = ref({
 })
 
 const previewDiary = computed((): Diary => ({
-  id: 0,
+  id: 'preview',
   title: form.value.title || 'Sample Title',
   width: form.value.width,
   height: form.value.height,

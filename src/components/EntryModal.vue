@@ -98,7 +98,7 @@ import { ImageUtils } from '@/utils/imageUtils'
 import type { EntryBlock } from '@/composables/useDiaries'
 
 interface Props {
-  diaryId: number
+  diaryId: string
 }
 
 const props = defineProps<Props>()

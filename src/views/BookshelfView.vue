@@ -33,7 +33,7 @@ onMounted(async () => {
   diaries.value = await getAllDiaries()
 })
 
-const openDiary = (diaryId: number | undefined) => {
+const openDiary = (diaryId: string | undefined) => {
   if (diaryId) {
     router.push(`/diary/${diaryId}`)
   }
