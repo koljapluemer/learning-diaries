@@ -21,7 +21,7 @@
         <div v-else class="connected-section">
           <div class="account-info">
             <div class="account-details">
-              <p><strong>Signed in as:</strong> {{ currentUser?.email || 'User' }}</p>
+              <p><strong>Signed in as:</strong> {{ currentUserLabel }}</p>
               <p><strong>Status:</strong> <span class="sync-status">{{ syncStatus }}</span></p>
             </div>
             <button @click="handleLogout" :disabled="isLoading" class="disconnect-btn fire-button fire-button--small">
@@ -102,7 +102,11 @@ type CloudUser = UserLogin | null
 
 const currentUser = ref<CloudUser>(cloud.currentUser?.value ?? null)
 const currentUserId = ref<string | null>(currentUser.value?.userId ?? null)
-const isLoggedIn = computed(() => !!currentUserId.value)
+const isLoggedIn = computed(() => currentUser.value?.isLoggedIn === true && !!currentUser.value.email)
+const currentUserLabel = computed(() => {
+  if (!currentUser.value) return 'Guest'
+  return currentUser.value.email || currentUser.value.name || currentUser.value.userId || 'Guest'
+})
 
 const stats = ref({
   diaries: 0,
@@ -116,11 +120,25 @@ const statusType = ref<'success' | 'error'>('success')
 const fileInput = ref<HTMLInputElement>()
 
 const syncStatus = computed(() => {
-  const phase = cloud.syncState?.value?.phase
-  if (phase === 'error') return 'Error'
-  if (phase === 'pushing' || phase === 'pulling' || phase === 'not-in-sync') return 'Syncing...'
-  if (phase === 'offline') return 'Offline'
-  return 'Connected'
+  const state = cloud.syncState?.value as SyncState | undefined
+  if (!state) return 'Offline'
+  switch (state.status) {
+    case 'error':
+      return 'Error'
+    case 'offline':
+      return 'Offline'
+    case 'connecting':
+      return 'Connecting...'
+    case 'connected':
+      if (state.phase === 'pushing' || state.phase === 'pulling' || state.phase === 'not-in-sync') {
+        return 'Syncing...'
+      }
+      return 'Connected'
+    case 'disconnected':
+      return 'Disconnected'
+    default:
+      return 'Idle'
+  }
 })
 
 const refreshAuthState = () => {
