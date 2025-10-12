@@ -7,13 +7,16 @@
         <router-link to="/new-diary" class="add-diary-btn">Add New Diary</router-link>
       </div>
     </div>
-    <div class="bookshelf">
-      <BookSpine
-        v-for="diary in diaries"
-        :key="diary.id"
-        :diary="diary"
-        @click="openDiary(diary.id)"
-      />
+    <div class="bookshelf-container">
+      <div class="bookshelf">
+        <BookSpine
+          v-for="diary in diaries"
+          :key="diary.id"
+          :diary="diary"
+          @click="openDiary(diary.id)"
+        />
+      </div>
+      <div class="wooden-shelf"></div>
     </div>
   </div>
 </template>
@@ -80,10 +83,32 @@ const openDiary = (diaryId: string | undefined) => {
   background: #6c757d;
 }
 
+.bookshelf-container {
+  position: relative;
+  display: inline-block;
+}
+
 .bookshelf {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-end;
   gap: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.wooden-shelf {
+  width: 100%;
+  height: 80px;
+  background-image: url('/src/assets/wood.jpg');
+  background-repeat: repeat;
+  background-size: 200px 200px;
+  border-radius: 4px;
+  box-shadow:
+    0 4px 8px rgba(0,0,0,0.2),
+    inset 0 2px 4px rgba(255,255,255,0.1),
+    inset 0 -2px 4px rgba(0,0,0,0.2);
+  position: relative;
+  margin-top: -10px;
 }
 </style>
