@@ -185,12 +185,8 @@ const recalcLayout = () => {
     inactive.forEach((diary, index) => {
       const coverWidth = Math.min(Math.max(diary.height, 1), containerWidth)
       const thickness = Math.max(diary.width, 1)
-      const centeredLeft = Math.max((containerWidth - coverWidth) / 2, 0)
-      const horizontalJitter = Math.random() * 50 - 25
-      const left = Math.min(
-        Math.max(centeredLeft + horizontalJitter, 0),
-        Math.max(containerWidth - coverWidth, 0)
-      )
+      const horizontalJitter = Math.random() * 40 - 10
+      const left = Math.min(Math.max(horizontalJitter, 0), Math.max(containerWidth - coverWidth, 0))
       const bottom = currentHeight
       inactiveLayouts.push({
         left,
