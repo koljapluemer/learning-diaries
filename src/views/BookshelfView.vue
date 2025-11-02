@@ -30,6 +30,10 @@
             height: `${inactiveBookLayouts[index].thickness}px`,
             backgroundColor: diary.color,
             color: diary.fontColor,
+            fontFamily: diary.fontFamily,
+            fontSize: `${diary.fontSize}px`,
+            fontWeight: diary.bold ? 'bold' : 'normal',
+            fontStyle: diary.italic ? 'italic' : 'normal',
             zIndex: inactiveBookLayouts[index].zIndex
           }
           : {}">
@@ -373,7 +377,6 @@ const openDiary = (diaryId: string | undefined) => {
 }
 
 .book-flat-title {
-  font-weight: 600;
   text-align: center;
   line-height: 1.2;
   word-break: break-word;
