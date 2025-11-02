@@ -26,6 +26,8 @@ export interface Entry {
   diaryId: string
   date: string
   blocks: EntryBlock[]
+  createdAt: Date
+  updatedAt?: Date
 }
 
 export class LearningDiariesDB extends Dexie {
@@ -38,6 +40,19 @@ export class LearningDiariesDB extends Dexie {
     this.version(1).stores({
       diaries: '@id, title, createdAt',
       entries: '@id, diaryId, date'
+    })
+
+    // Version 2: Add createdAt and updatedAt to entries
+    this.version(2).stores({
+      diaries: '@id, title, createdAt',
+      entries: '@id, diaryId, date, createdAt'
+    }).upgrade(tx => {
+      // Migrate existing entries to have createdAt timestamp
+      return tx.table('entries').toCollection().modify(entry => {
+        if (!entry.createdAt) {
+          entry.createdAt = new Date()
+        }
+      })
     })
   }
 }

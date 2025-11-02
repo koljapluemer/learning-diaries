@@ -1,7 +1,7 @@
 <template>
   <div class="add-entry-view">
     <PageHeader
-      :title="diary?.title ? `Add Entry to ${diary.title}` : 'Add Entry'"
+      :title="diary?.title ? `${isEditMode ? 'Edit' : 'Add'} Entry ${isEditMode ? 'in' : 'to'} ${diary.title}` : isEditMode ? 'Edit Entry' : 'Add Entry'"
       :actions="[
         { label: '← Back', to: `/diary/${diaryId}` }
       ]"
@@ -94,25 +94,29 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import PageHeader from '@/components/PageHeader.vue'
 import { useDiaries } from '@/composables/useDiaries'
 import { useEntries } from '@/composables/useEntries'
 import { ImageUtils } from '@/utils/imageUtils'
-import type { Diary, EntryBlock } from '@/composables/useDiaries'
+import type { Diary, EntryBlock, Entry } from '@/composables/useDiaries'
 
 const route = useRoute()
 const router = useRouter()
 const diaryId = route.params.id as string
+const editDate = route.params.date as string | undefined
 
 const { getDiary } = useDiaries()
-const { createEntry } = useEntries()
+const { createEntry, getEntry, updateEntry } = useEntries()
 
 const diary = ref<Diary | null>(null)
 const entryDate = ref('')
 const entryBlocks = ref<EntryBlock[]>([])
 const isUploading = ref(false)
+const existingEntry = ref<Entry | null>(null)
+
+const isEditMode = computed(() => !!editDate)
 
 onMounted(async () => {
   const foundDiary = await getDiary(diaryId)
@@ -120,10 +124,23 @@ onMounted(async () => {
     diary.value = foundDiary
   }
 
-  const today = new Date()
-  entryDate.value = today.toISOString().split('T')[0]
-  // Start with one text block
-  entryBlocks.value = [{ type: 'text', content: '' }]
+  if (isEditMode.value && editDate) {
+    // Edit mode: load existing entry
+    const entry = await getEntry(diaryId, editDate)
+    if (entry) {
+      existingEntry.value = entry
+      entryDate.value = entry.date
+      entryBlocks.value = [...entry.blocks]
+    } else {
+      alert('Entry not found')
+      router.push(`/diary/${diaryId}`)
+    }
+  } else {
+    // Add mode: start with today's date and empty text block
+    const today = new Date()
+    entryDate.value = today.toISOString().split('T')[0]
+    entryBlocks.value = [{ type: 'text', content: '' }]
+  }
 })
 
 const goBack = () => {
@@ -194,17 +211,26 @@ const submitEntry = async () => {
       return
     }
 
-    await createEntry({
-      diaryId: diaryId,
-      date: entryDate.value,
-      blocks: validBlocks
-    })
+    if (isEditMode.value && existingEntry.value?.id) {
+      // Edit mode: update existing entry
+      await updateEntry(existingEntry.value.id, {
+        blocks: validBlocks,
+        date: entryDate.value
+      })
+    } else {
+      // Add mode: create new entry
+      await createEntry({
+        diaryId: diaryId,
+        date: entryDate.value,
+        blocks: validBlocks
+      })
+    }
 
     // Navigate back to diary view
     router.push(`/diary/${diaryId}`)
   } catch (error) {
-    console.error('Failed to create entry:', error)
-    alert('Failed to save entry. Please try again.')
+    console.error(`Failed to ${isEditMode.value ? 'update' : 'create'} entry:`, error)
+    alert(`Failed to ${isEditMode.value ? 'update' : 'save'} entry. Please try again.`)
   }
 }
 </script>

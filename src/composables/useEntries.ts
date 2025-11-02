@@ -2,7 +2,7 @@ import { db } from './useDiaries'
 import type { Entry } from './useDiaries'
 
 export function useEntries() {
-  const createEntry = async (entryData: Omit<Entry, 'id'>) => {
+  const createEntry = async (entryData: Omit<Entry, 'id' | 'createdAt' | 'updatedAt'>) => {
     const existingEntry = await db.entries
       .where('diaryId')
       .equals(entryData.diaryId)
@@ -12,9 +12,16 @@ export function useEntries() {
     if (existingEntry) {
       // Append new blocks to existing entry
       const updatedBlocks = [...existingEntry.blocks, ...entryData.blocks]
-      return await db.entries.update(existingEntry.id!, { blocks: updatedBlocks })
+      return await db.entries.update(existingEntry.id!, {
+        blocks: updatedBlocks,
+        updatedAt: new Date()
+      })
     } else {
-      return await db.entries.add(entryData)
+      const entryWithTimestamp: Omit<Entry, 'id'> = {
+        ...entryData,
+        createdAt: new Date()
+      }
+      return await db.entries.add(entryWithTimestamp)
     }
   }
 
@@ -30,9 +37,34 @@ export function useEntries() {
       .first()
   }
 
+  const updateEntry = async (entryId: string, updates: Partial<Omit<Entry, 'id' | 'createdAt'>>): Promise<number> => {
+    return await db.entries.update(entryId, {
+      ...updates,
+      updatedAt: new Date()
+    })
+  }
+
+  const deleteEntry = async (entryId: string): Promise<void> => {
+    return await db.entries.delete(entryId)
+  }
+
+  const canModifyEntry = (entry: Entry): boolean => {
+    if (!entry.createdAt) return false
+
+    const now = new Date()
+    const entryTime = new Date(entry.createdAt)
+    const timeDiff = now.getTime() - entryTime.getTime()
+    const fifteenMinutes = 15 * 60 * 1000
+
+    return timeDiff <= fifteenMinutes
+  }
+
   return {
     createEntry,
     getEntriesForDiary,
-    getEntry
+    getEntry,
+    updateEntry,
+    deleteEntry,
+    canModifyEntry
   }
 }

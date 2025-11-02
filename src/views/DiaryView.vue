@@ -13,6 +13,22 @@
         <div class="page">
           <div class="page-header" v-if="currentPageEntry">
             <div class="date">{{ currentPageDate }}</div>
+            <div v-if="currentPageEntry && canModifyEntry(currentPageEntry)" class="entry-actions">
+              <button
+                @click="handleEdit"
+                class="action-btn edit-btn fire-button fire-button--small"
+                title="Edit entry"
+              >
+                ✏️ Edit
+              </button>
+              <button
+                @click="handleDelete"
+                class="action-btn delete-btn fire-button fire-button--small"
+                title="Delete entry"
+              >
+                🗑️ Delete
+              </button>
+            </div>
           </div>
 
           <div class="page-content" :class="{ 'has-content': currentPageEntry }">
@@ -107,7 +123,7 @@ const router = useRouter()
 const diaryId = route.params.id as string
 
 const { getDiary } = useDiaries()
-const { getEntriesForDiary } = useEntries()
+const { getEntriesForDiary, deleteEntry, canModifyEntry } = useEntries()
 
 const diary = ref<Diary | null>(null)
 const entries = ref<Entry[]>([])
@@ -150,6 +166,41 @@ const goToPage = (page: number) => {
 const loadEntries = async () => {
   if (diary.value?.id) {
     entries.value = await getEntriesForDiary(diary.value.id)
+  }
+}
+
+const handleEdit = () => {
+  if (currentPageEntry.value) {
+    router.push(`/diary/${diaryId}/entry/${currentPageEntry.value.date}/edit`)
+  }
+}
+
+const handleDelete = async () => {
+  if (!currentPageEntry.value) return
+
+  const confirmed = confirm('Are you sure you want to delete this entry? This action cannot be undone.')
+  if (!confirmed) return
+
+  try {
+    if (currentPageEntry.value.id) {
+      await deleteEntry(currentPageEntry.value.id)
+
+      // Reload entries
+      await loadEntries()
+
+      // Navigate to appropriate page
+      if (sortedEntries.value.length === 0) {
+        // No entries left, stay on page without query param
+        router.replace({ query: {} })
+      } else {
+        // Navigate to the same index or last page if we were on the last entry
+        const newPage = Math.min(currentPage.value, sortedEntries.value.length - 1)
+        router.replace({ query: { page: newPage.toString() } })
+      }
+    }
+  } catch (error) {
+    console.error('Failed to delete entry:', error)
+    alert('Failed to delete entry. Please try again.')
   }
 }
 
@@ -217,11 +268,49 @@ onMounted(async () => {
   margin-bottom: 1.5rem;
   padding-bottom: 0.5rem;
   border-bottom: 2px solid #ddd;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
 }
 
 .date {
   font-weight: bold;
   font-size: 1.1rem;
+}
+
+.entry-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+}
+
+.edit-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.edit-btn:hover {
+  background: linear-gradient(135deg, #5568d3 0%, #653a8e 100%);
+  transform: translateY(-1px);
+}
+
+.delete-btn {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.delete-btn:hover {
+  background: linear-gradient(135deg, #df82ea 0%, #e44658 100%);
+  transform: translateY(-1px);
 }
 
 .lines {

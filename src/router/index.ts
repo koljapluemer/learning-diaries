@@ -29,6 +29,11 @@ const router = createRouter({
       component: AddEntryView
     },
     {
+      path: '/diary/:id/entry/:date/edit',
+      name: 'edit-entry',
+      component: AddEntryView
+    },
+    {
       path: '/settings',
       name: 'settings',
       component: SettingsView
