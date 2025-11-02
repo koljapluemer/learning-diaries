@@ -4,7 +4,7 @@
       :title="diary?.title || 'Loading...'"
       :actions="[
         { label: '← Back', to: '/' },
-        { label: 'Add Entry', to: `/diary/${diaryId}?add=true` }
+        { label: 'Add Entry', to: `/diary/${diaryId}/add-entry` }
       ]"
     />
 
@@ -55,13 +55,6 @@
         <button @click="goToPage(totalPages - 1)" :disabled="currentPage >= totalPages - 1" class="nav-btn fire-button fire-button--small">Last</button>
       </div>
     </div>
-
-    <EntryModal
-      v-if="showEntryModal"
-      :diary-id="diaryId"
-      @close="showEntryModal = false"
-      @entry-added="onEntryAdded"
-    />
   </div>
 </template>
 
@@ -69,7 +62,6 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import PageHeader from '@/components/PageHeader.vue'
-import EntryModal from '@/components/EntryModal.vue'
 import { useDiaries } from '@/composables/useDiaries'
 import { useEntries } from '@/composables/useEntries'
 import type { Diary, Entry } from '@/composables/useDiaries'
@@ -83,7 +75,6 @@ const { getEntriesForDiary } = useEntries()
 
 const diary = ref<Diary | null>(null)
 const entries = ref<Entry[]>([])
-const showEntryModal = ref(false)
 
 const sortedEntries = computed(() => {
   return [...entries.value].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
@@ -120,12 +111,6 @@ const goToPage = (page: number) => {
   }
 }
 
-const onEntryAdded = async () => {
-  showEntryModal.value = false
-  await loadEntries()
-  goToPage(totalPages.value - 1)
-}
-
 const loadEntries = async () => {
   if (diary.value?.id) {
     entries.value = await getEntriesForDiary(diary.value.id)
@@ -137,10 +122,7 @@ onMounted(async () => {
   if (foundDiary) {
     diary.value = foundDiary
     await loadEntries()
-    if (route.query.add === 'true') {
-      showEntryModal.value = true
-      router.replace({ query: { ...route.query, add: undefined } })
-    } else if (!route.query.page && totalPages.value > 0) {
+    if (!route.query.page && totalPages.value > 0) {
       router.replace({ query: { page: (totalPages.value - 1).toString() } })
     }
   }

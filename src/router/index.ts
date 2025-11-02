@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import BookshelfView from '@/views/BookshelfView.vue'
 import NewDiaryView from '@/views/NewDiaryView.vue'
 import DiaryView from '@/views/DiaryView.vue'
+import AddEntryView from '@/views/AddEntryView.vue'
 import SettingsView from '@/views/SettingsView.vue'
 
 const router = createRouter({
@@ -21,6 +22,11 @@ const router = createRouter({
       path: '/diary/:id',
       name: 'diary',
       component: DiaryView
+    },
+    {
+      path: '/diary/:id/add-entry',
+      name: 'add-entry',
+      component: AddEntryView
     },
     {
       path: '/settings',
