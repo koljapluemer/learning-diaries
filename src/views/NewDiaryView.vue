@@ -1,7 +1,12 @@
 <template>
   <div class="new-diary-view">
     <div class="container">
-      <h1 class="fire-heading fire-heading--md">Create New Learning Diary</h1>
+      <PageHeader
+        title="Create New Learning Diary"
+        :actions="[
+          { label: '← Cancel', to: '/' }
+        ]"
+      />
 
       <div class="form-preview-layout">
         <form @submit.prevent="createDiary" class="diary-form">
@@ -101,7 +106,6 @@
           </div>
 
           <div class="form-actions">
-            <router-link to="/" class="cancel-btn fire-button fire-button--small">Cancel</router-link>
             <button type="submit" class="create-btn fire-button">Create Diary</button>
           </div>
         </form>
@@ -120,6 +124,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import PageHeader from '@/components/PageHeader.vue'
 import BookSpine from '@/components/BookSpine.vue'
 import { useDiaries } from '@/composables/useDiaries'
 import type { Diary } from '@/composables/useDiaries'
@@ -194,15 +199,15 @@ const createDiary = async () => {
   padding: 2rem;
 }
 
+@media (max-width: 768px) {
+  .new-diary-view {
+    padding: 1rem;
+  }
+}
+
 .container {
   max-width: 1200px;
   margin: 0 auto;
-}
-
-h1 {
-  text-align: center;
-  margin-bottom: 2rem;
-  font-size: 2.5rem;
 }
 
 .form-preview-layout {
@@ -305,8 +310,7 @@ small {
 
 .form-actions {
   display: flex;
-  gap: 1rem;
-  justify-content: flex-end;
+  justify-content: center;
   margin-top: 2rem;
 }
 

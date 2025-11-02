@@ -1,10 +1,11 @@
 <template>
   <div class="settings-view">
-    <div class="header">
-      <router-link to="/" class="back-btn fire-button fire-button--small">← Back to Bookshelf</router-link>
-      <h1 class="fire-heading fire-heading--md">Settings</h1>
-      <div></div>
-    </div>
+    <PageHeader
+      title="Settings"
+      :actions="[
+        { label: '← Back', to: '/' }
+      ]"
+    />
 
     <div class="settings-container">
       <!-- Dexie Cloud Sync Section -->
@@ -84,6 +85,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
+import PageHeader from '@/components/PageHeader.vue'
 import { db } from '@/composables/useDiaries'
 import { backupService } from '@/services/backup'
 import type { UserLogin, SyncState } from 'dexie-cloud-addon'
@@ -256,11 +258,10 @@ onBeforeUnmount(() => {
   padding: 2rem;
 }
 
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 2rem;
+@media (max-width: 768px) {
+  .settings-view {
+    padding: 1rem;
+  }
 }
 
 .settings-container {

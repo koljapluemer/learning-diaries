@@ -1,10 +1,12 @@
 <template>
   <div class="diary-view" :style="{ '--diary-color': diary?.color || '#ff6b6b' }">
-    <div class="header">
-      <router-link to="/" class="back-btn fire-button fire-button--small">← Back to Bookshelf</router-link>
-      <h1 class="fire-heading fire-heading--md">{{ diary?.title || 'Loading...' }}</h1>
-      <button @click="showEntryModal = true" class="add-entry-btn fire-button">Add Entry</button>
-    </div>
+    <PageHeader
+      :title="diary?.title || 'Loading...'"
+      :actions="[
+        { label: '← Back', to: '/' },
+        { label: 'Add Entry', to: `/diary/${diaryId}?add=true` }
+      ]"
+    />
 
     <div class="notebook-container">
       <div class="notebook">
@@ -66,6 +68,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import PageHeader from '@/components/PageHeader.vue'
 import EntryModal from '@/components/EntryModal.vue'
 import { useDiaries } from '@/composables/useDiaries'
 import { useEntries } from '@/composables/useEntries'
@@ -134,7 +137,10 @@ onMounted(async () => {
   if (foundDiary) {
     diary.value = foundDiary
     await loadEntries()
-    if (!route.query.page && totalPages.value > 0) {
+    if (route.query.add === 'true') {
+      showEntryModal.value = true
+      router.replace({ query: { ...route.query, add: undefined } })
+    } else if (!route.query.page && totalPages.value > 0) {
       router.replace({ query: { page: (totalPages.value - 1).toString() } })
     }
   }
@@ -147,11 +153,10 @@ onMounted(async () => {
   padding: 2rem;
 }
 
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 2rem;
+@media (max-width: 768px) {
+  .diary-view {
+    padding: 1rem;
+  }
 }
 
 .notebook-container {

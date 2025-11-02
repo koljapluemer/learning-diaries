@@ -1,12 +1,12 @@
 <template>
   <div class="bookshelf-view">
-    <div class="header">
-      <h1 class="fire-heading fire-heading--lg">Learning Diaries</h1>
-      <div class="header-actions">
-        <router-link to="/settings" class="settings-btn fire-button fire-button--small">Settings</router-link>
-        <router-link to="/new-diary" class="add-diary-btn fire-button">Add New Diary</router-link>
-      </div>
-    </div>
+    <PageHeader
+      title="Learning Diaries"
+      :actions="[
+        { label: 'Settings', to: '/settings' },
+        { label: 'Add New Diary', to: '/new-diary' }
+      ]"
+    />
     <div class="bookshelf" ref="bookshelfRef" :style="{
       '--shelf-thickness': `${SHELF_THICKNESS}px`,
       '--bookcase-min-height': `${MIN_BOOKSHELF_HEIGHT}px`,
@@ -47,6 +47,7 @@
 import { onBeforeUnmount, onMounted, nextTick, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import BookSpine from '@/components/BookSpine.vue'
+import PageHeader from '@/components/PageHeader.vue'
 import { useDiaries } from '@/composables/useDiaries'
 import { useEntries } from '@/composables/useEntries'
 import type { Diary } from '@/composables/useDiaries'
@@ -327,17 +328,10 @@ const openDiary = (diaryId: string | undefined) => {
   min-height: 100vh;
 }
 
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 2rem;
-}
-
-.header-actions {
-  display: flex;
-  gap: 1rem;
-  align-items: center;
+@media (max-width: 768px) {
+  .bookshelf-view {
+    padding: 1rem;
+  }
 }
 
 .bookshelf {
