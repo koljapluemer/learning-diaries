@@ -48,11 +48,47 @@
       </div>
 
       <div class="navigation">
-        <button @click="goToPage(0)" :disabled="currentPage === 0" class="nav-btn fire-button fire-button--small">First</button>
-        <button @click="goToPage(currentPage - 1)" :disabled="currentPage === 0" class="nav-btn fire-button fire-button--small">Previous</button>
-        <span class="page-info">Page {{ currentPage + 1 }} of {{ totalPages }}</span>
-        <button @click="goToPage(currentPage + 1)" :disabled="currentPage >= totalPages - 1" class="nav-btn fire-button fire-button--small">Next</button>
-        <button @click="goToPage(totalPages - 1)" :disabled="currentPage >= totalPages - 1" class="nav-btn fire-button fire-button--small">Last</button>
+        <button
+          @click="goToPage(0)"
+          :disabled="currentPage === 0"
+          class="nav-btn nav-btn--edge fire-button fire-button--small"
+          aria-label="First page"
+        >
+          <span class="nav-icon">⟪</span>
+          <span class="nav-label">First</span>
+        </button>
+        <button
+          @click="goToPage(currentPage - 1)"
+          :disabled="currentPage === 0"
+          class="nav-btn nav-btn--arrow fire-button fire-button--small"
+          aria-label="Previous page"
+        >
+          <span class="nav-icon">‹</span>
+          <span class="nav-label">Prev</span>
+        </button>
+        <div class="page-info">
+          <span class="page-current">{{ currentPage + 1 }}</span>
+          <span class="page-separator">/</span>
+          <span class="page-total">{{ totalPages }}</span>
+        </div>
+        <button
+          @click="goToPage(currentPage + 1)"
+          :disabled="currentPage >= totalPages - 1"
+          class="nav-btn nav-btn--arrow fire-button fire-button--small"
+          aria-label="Next page"
+        >
+          <span class="nav-label">Next</span>
+          <span class="nav-icon">›</span>
+        </button>
+        <button
+          @click="goToPage(totalPages - 1)"
+          :disabled="currentPage >= totalPages - 1"
+          class="nav-btn nav-btn--edge fire-button fire-button--small"
+          aria-label="Last page"
+        >
+          <span class="nav-label">Last</span>
+          <span class="nav-icon">⟫</span>
+        </button>
       </div>
     </div>
   </div>
@@ -259,16 +295,132 @@ onMounted(async () => {
 
 .navigation {
   display: flex;
-  gap: 1rem;
+  gap: 0.5rem;
   align-items: center;
+  justify-content: center;
   background: white;
-  padding: 1rem 2rem;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  padding: 1rem 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  flex-wrap: wrap;
+}
+
+.nav-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.6rem 1rem;
+  min-width: 44px;
+  transition: all 0.2s ease;
+}
+
+.nav-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.nav-btn:not(:disabled):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.nav-btn:not(:disabled):active {
+  transform: translateY(0);
+}
+
+.nav-icon {
+  font-size: 1.2rem;
+  line-height: 1;
+  font-weight: bold;
+}
+
+.nav-label {
+  font-size: 0.875rem;
+  font-weight: 600;
 }
 
 .page-info {
+  display: flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  padding: 0.6rem 1.25rem;
+  background: linear-gradient(135deg, #f5f5dc 0%, #faf8f3 100%);
+  border-radius: 8px;
+  margin: 0 0.5rem;
   font-weight: 600;
-  margin: 0 1rem;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.08);
+}
+
+.page-current {
+  font-size: 1.25rem;
+  color: #ff6b6b;
+  font-weight: 700;
+}
+
+.page-separator {
+  font-size: 1rem;
+  color: #999;
+  font-weight: 400;
+}
+
+.page-total {
+  font-size: 1rem;
+  color: #666;
+  font-weight: 600;
+}
+
+@media (max-width: 768px) {
+  .navigation {
+    padding: 0.75rem 0.5rem;
+    gap: 0.35rem;
+  }
+
+  .nav-btn {
+    padding: 0.5rem 0.75rem;
+    min-width: 40px;
+  }
+
+  .nav-btn--edge .nav-label {
+    display: none;
+  }
+
+  .nav-btn--arrow .nav-label {
+    display: none;
+  }
+
+  .nav-icon {
+    font-size: 1.1rem;
+  }
+
+  .page-info {
+    padding: 0.5rem 1rem;
+    margin: 0 0.25rem;
+  }
+
+  .page-current {
+    font-size: 1.1rem;
+  }
+
+  .page-separator,
+  .page-total {
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .navigation {
+    gap: 0.25rem;
+    padding: 0.5rem;
+  }
+
+  .nav-btn {
+    padding: 0.5rem;
+    min-width: 36px;
+  }
+
+  .page-info {
+    padding: 0.4rem 0.75rem;
+    margin: 0;
+  }
 }
 </style>
