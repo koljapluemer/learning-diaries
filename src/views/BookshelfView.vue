@@ -112,8 +112,10 @@ const updateDiaryGroups = async (list: Diary[]) => {
     return
   }
 
-  const now = Date.now()
-  const cutoff = now - RECENT_WINDOW_MS
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const cutoffDate = new Date(today.getTime() - RECENT_WINDOW_MS)
+  cutoffDate.setHours(0, 0, 0, 0)
 
   const groups = await Promise.all(list.map(async (diary) => {
     if (!diary.id) {
@@ -121,17 +123,26 @@ const updateDiaryGroups = async (list: Diary[]) => {
     }
 
     const entries = await getEntriesForDiary(diary.id)
-    const latestTimestamp = entries.reduce((latest, entry) => {
-      const timestamp = Date.parse(entry.date)
-      if (Number.isNaN(timestamp)) {
-        return latest
-      }
-      return Math.max(latest, timestamp)
-    }, Number.NEGATIVE_INFINITY)
+    if (entries.length === 0) {
+      return { diary, isRecent: false }
+    }
+
+    // Find the latest entry date by comparing date strings directly
+    const latestEntryDate = entries.reduce((latest, entry) => {
+      return entry.date > latest ? entry.date : latest
+    }, '')
+
+    if (!latestEntryDate) {
+      return { diary, isRecent: false }
+    }
+
+    // Parse the date in local timezone and normalize to midnight
+    const entryDate = new Date(latestEntryDate + 'T00:00:00')
+    entryDate.setHours(0, 0, 0, 0)
 
     return {
       diary,
-      isRecent: latestTimestamp >= cutoff
+      isRecent: entryDate >= cutoffDate
     }
   }))
 
