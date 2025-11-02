@@ -54,7 +54,7 @@ import type { Diary } from '@/composables/useDiaries'
 const SHELF_THICKNESS = 28
 const SHELF_GAP = 48
 const MIN_BOOKSHELF_HEIGHT = 320
-const RECENT_WINDOW_MS = 7 * 7 * 24 * 60 * 60 * 1000
+const RECENT_WINDOW_MS = 7 * 24 * 60 * 60 * 1000
 const INACTIVE_STACK_GAP = 72
 
 const router = useRouter()
@@ -380,7 +380,7 @@ const openDiary = (diaryId: string | undefined) => {
   left: 0;
   right: 0;
   height: var(--shelf-thickness);
-  background-image: url('/src/assets/wood.jpg');
+  background-image: url('/wood.jpg');
   background-size: cover;
   background-repeat: repeat;
   box-shadow:
