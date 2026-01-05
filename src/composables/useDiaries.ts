@@ -16,9 +16,9 @@ export interface Diary {
 }
 
 export interface EntryBlock {
-  type: 'text' | 'image'
-  content: string // text content or base64 image data
-  caption?: string // optional caption for images
+  type: 'text' | 'image' | 'audio'
+  content: string // text content, base64 image data, or base64 audio data
+  caption?: string // optional caption for images and audio
 }
 
 export interface Entry {

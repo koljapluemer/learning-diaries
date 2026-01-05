@@ -28,7 +28,9 @@
               class="block-item"
             >
               <div class="block-header">
-                <span class="block-type">{{ block.type === 'text' ? '📝' : '🖼️' }} {{ block.type }}</span>
+                <span class="block-type">
+                  {{ block.type === 'text' ? '📝' : block.type === 'image' ? '🖼️' : '🎵' }} {{ block.type }}
+                </span>
                 <button type="button" @click="removeBlock(index)" class="remove-block-btn">×</button>
               </div>
 
@@ -71,6 +73,36 @@
                   />
                 </div>
               </div>
+
+              <!-- Audio Block -->
+              <div v-else-if="block.type === 'audio'" class="audio-block">
+                <div v-if="!block.content" class="audio-upload">
+                  <input
+                    :ref="`audioInput-${index}`"
+                    type="file"
+                    accept="audio/*"
+                    @change="handleAudioUpload($event, index)"
+                    style="display: none"
+                  />
+                  <button
+                    type="button"
+                    @click="($refs[`audioInput-${index}`] as HTMLInputElement[])?.[0]?.click()"
+                    class="upload-btn fire-button"
+                  >
+                    📁 Choose Audio
+                  </button>
+                  <p class="upload-hint">Max 10MB • MP3, M4A, WAV, OGG</p>
+                </div>
+                <div v-else class="audio-preview">
+                  <audio controls :src="block.content" class="preview-audio"></audio>
+                  <button type="button" @click="removeAudio(index)" class="remove-audio-btn fire-button">Remove Audio</button>
+                  <input
+                    v-model="block.caption"
+                    placeholder="Add a caption (optional)"
+                    class="caption-input"
+                  />
+                </div>
+              </div>
             </div>
 
             <div class="add-block-controls">
@@ -79,6 +111,9 @@
               </button>
               <button type="button" @click="addImageBlock" class="add-block-btn fire-button">
                 🖼️ Add Image
+              </button>
+              <button type="button" @click="addAudioBlock" class="add-block-btn fire-button">
+                🎵 Add Audio
               </button>
             </div>
           </div>
@@ -100,6 +135,7 @@ import PageHeader from '@/components/PageHeader.vue'
 import { useDiaries } from '@/composables/useDiaries'
 import { useEntries } from '@/composables/useEntries'
 import { ImageUtils } from '@/utils/imageUtils'
+import { AudioUtils } from '@/utils/audioUtils'
 import type { Diary, EntryBlock, Entry } from '@/composables/useDiaries'
 
 const route = useRoute()
@@ -155,11 +191,22 @@ const addImageBlock = () => {
   entryBlocks.value.push({ type: 'image', content: '' })
 }
 
+const addAudioBlock = () => {
+  entryBlocks.value.push({ type: 'audio', content: '' })
+}
+
 const removeBlock = (index: number) => {
   entryBlocks.value.splice(index, 1)
 }
 
 const removeImage = (index: number) => {
+  if (entryBlocks.value[index]) {
+    entryBlocks.value[index].content = ''
+    entryBlocks.value[index].caption = undefined
+  }
+}
+
+const removeAudio = (index: number) => {
   if (entryBlocks.value[index]) {
     entryBlocks.value[index].content = ''
     entryBlocks.value[index].caption = undefined
@@ -192,13 +239,40 @@ const handleImageUpload = async (event: Event, blockIndex: number) => {
   }
 }
 
+const handleAudioUpload = async (event: Event, blockIndex: number) => {
+  const file = (event.target as HTMLInputElement).files?.[0]
+  if (!file) return
+
+  if (!AudioUtils.validateAudioFile(file)) {
+    alert('Please select a valid audio file (MP3, M4A, WAV, OGG, WebM)')
+    return
+  }
+
+  isUploading.value = true
+  try {
+    const audioBase64 = await AudioUtils.processAudio(file)
+    if (entryBlocks.value[blockIndex]) {
+      entryBlocks.value[blockIndex].content = audioBase64
+    }
+  } catch (error) {
+    console.error('Audio upload failed:', error)
+    alert(`Audio upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
+  } finally {
+    isUploading.value = false
+    // Reset the file input
+    const input = event.target as HTMLInputElement
+    input.value = ''
+  }
+}
+
 const submitEntry = async () => {
   try {
     // Filter out empty blocks and convert to plain objects
     const validBlocks = entryBlocks.value
       .filter(block =>
         (block.type === 'text' && block.content.trim()) ||
-        (block.type === 'image' && block.content)
+        (block.type === 'image' && block.content) ||
+        (block.type === 'audio' && block.content)
       )
       .map(block => ({
         type: block.type,
@@ -415,5 +489,22 @@ const submitEntry = async () => {
 .save-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.audio-upload {
+  text-align: center;
+  padding: 2rem;
+  border: 2px dashed #ddd;
+  border-radius: 6px;
+  background: #fafafa;
+}
+
+.audio-preview {
+  text-align: center;
+}
+
+.preview-audio {
+  width: 100%;
+  margin-bottom: 1rem;
 }
 </style>

@@ -57,6 +57,14 @@
                     <div v-if="block.caption" class="image-caption">{{ block.caption }}</div>
                   </div>
                 </div>
+
+                <!-- Audio Block -->
+                <div v-else-if="block.type === 'audio'" class="audio-block">
+                  <div class="audio-container">
+                    <audio controls :src="block.content" class="entry-audio"></audio>
+                    <div v-if="block.caption" class="audio-caption">{{ block.caption }}</div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -374,6 +382,35 @@ onMounted(async () => {
 }
 
 .image-caption {
+  margin-top: 0.75rem;
+  font-style: italic;
+  color: #666;
+  font-size: 0.9rem;
+  text-align: center;
+  padding: 0 1rem;
+}
+
+.audio-block {
+  margin: 2rem 0;
+  text-align: center;
+  width: 100%;
+}
+
+.audio-container {
+  display: inline-block;
+  max-width: calc(100% - 3rem);
+  margin: 0 auto;
+  width: 100%;
+}
+
+.entry-audio {
+  max-width: 100%;
+  width: 100%;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.audio-caption {
   margin-top: 0.75rem;
   font-style: italic;
   color: #666;
