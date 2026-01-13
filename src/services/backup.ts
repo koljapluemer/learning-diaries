@@ -1,10 +1,31 @@
-import { db, type Diary, type Entry } from '@/composables/useDiaries'
+import { db, type Diary, type Entry, type EntryBlock } from '@/composables/useDiaries'
+
+interface ExportDiary {
+  title: string
+  width: number
+  height: number
+  color: string
+  fontColor: string
+  fontFamily: string
+  fontSize: number
+  bold: boolean
+  italic: boolean
+  createdAt: string
+}
+
+interface ExportEntry {
+  diaryTitle: string
+  date: string
+  blocks: EntryBlock[]
+  createdAt: string
+  updatedAt?: string
+}
 
 interface BackupData {
   version: string
   timestamp: string
-  diaries: Diary[]
-  entries: Entry[]
+  diaries: ExportDiary[]
+  entries: ExportEntry[]
 }
 
 interface BackupStats {
@@ -17,12 +38,15 @@ class BackupService {
   async exportData(): Promise<string> {
     const diaries = await db.diaries.toArray()
     const entries = await db.entries.toArray()
+    const diaryTitleById = new Map(diaries.map(diary => [diary.id, diary.title]))
 
     const backupData: BackupData = {
       version: '1.0',
       timestamp: new Date().toISOString(),
-      diaries,
-      entries
+      diaries: diaries.map(diary => this.serializeDiary(diary)),
+      entries: entries
+        .map(entry => this.serializeEntry(entry, diaryTitleById))
+        .filter((entry): entry is ExportEntry => Boolean(entry))
     }
 
     return JSON.stringify(backupData, null, 2)
@@ -38,24 +62,41 @@ class BackupService {
 
       // Clear existing data
       await db.transaction('rw', [db.diaries, db.entries], async () => {
-        await db.diaries.clear()
-        await db.entries.clear()
+        const existingDiaries = await db.diaries.toArray()
+        const diaryByTitle = new Map(existingDiaries.map(diary => [diary.title, diary]))
+        const existingEntries = await db.entries.toArray()
+        const existingEntryKeys = new Set(
+          existingEntries.map(entry => this.entryDedupKey(entry.diaryId, entry.date, entry.blocks))
+        )
 
-        // Import diaries
+        // Import diaries (by title)
         for (const diary of backupData.diaries) {
-          const { id, ...diaryData } = diary
-          void id // Ignore unused variable
-          await db.diaries.add({
-            ...diaryData,
-            createdAt: new Date(diaryData.createdAt)
+          if (diaryByTitle.has(diary.title)) continue
+          const createdAt = new Date(diary.createdAt)
+          const id = await db.diaries.add({
+            ...diary,
+            createdAt: Number.isNaN(createdAt.getTime()) ? new Date() : createdAt
           })
+          diaryByTitle.set(diary.title, { ...diary, id, createdAt })
         }
 
-        // Import entries
+        // Import entries (by diary title + date + blocks)
         for (const entry of backupData.entries) {
-          const { id, ...entryData } = entry
-          void id // Ignore unused variable
-          await db.entries.add(entryData)
+          const diary = diaryByTitle.get(entry.diaryTitle)
+          if (!diary?.id) continue
+          const entryKey = this.entryDedupKey(diary.id, entry.date, entry.blocks)
+          if (existingEntryKeys.has(entryKey)) continue
+
+          const createdAt = new Date(entry.createdAt)
+          const updatedAt = entry.updatedAt ? new Date(entry.updatedAt) : undefined
+          await db.entries.add({
+            diaryId: diary.id,
+            date: entry.date,
+            blocks: entry.blocks,
+            createdAt: Number.isNaN(createdAt.getTime()) ? new Date() : createdAt,
+            updatedAt: updatedAt && !Number.isNaN(updatedAt.getTime()) ? updatedAt : undefined
+          })
+          existingEntryKeys.add(entryKey)
         }
       })
 
@@ -135,7 +176,7 @@ class BackupService {
     )
   }
 
-  private isValidDiary(diary: unknown): diary is Diary {
+  private isValidDiary(diary: unknown): diary is ExportDiary {
     if (!diary || typeof diary !== 'object') return false
     const obj = diary as Record<string, unknown>
 
@@ -149,19 +190,51 @@ class BackupService {
       typeof obj.fontSize === 'number' &&
       typeof obj.bold === 'boolean' &&
       typeof obj.italic === 'boolean' &&
-      (obj.createdAt instanceof Date || typeof obj.createdAt === 'string')
+      typeof obj.createdAt === 'string'
     )
   }
 
-  private isValidEntry(entry: unknown): entry is Entry {
+  private isValidEntry(entry: unknown): entry is ExportEntry {
     if (!entry || typeof entry !== 'object') return false
     const obj = entry as Record<string, unknown>
 
     return (
-      typeof obj.diaryId === 'string' &&
+      typeof obj.diaryTitle === 'string' &&
       typeof obj.date === 'string' &&
-      Array.isArray(obj.blocks)
+      Array.isArray(obj.blocks) &&
+      typeof obj.createdAt === 'string'
     )
+  }
+
+  private serializeDiary(diary: Diary): ExportDiary {
+    return {
+      title: diary.title,
+      width: diary.width,
+      height: diary.height,
+      color: diary.color,
+      fontColor: diary.fontColor,
+      fontFamily: diary.fontFamily,
+      fontSize: diary.fontSize,
+      bold: diary.bold,
+      italic: diary.italic,
+      createdAt: diary.createdAt.toISOString()
+    }
+  }
+
+  private serializeEntry(entry: Entry, diaryTitleById: Map<string | undefined, string>): ExportEntry | null {
+    const diaryTitle = diaryTitleById.get(entry.diaryId)
+    if (!diaryTitle) return null
+    return {
+      diaryTitle,
+      date: entry.date,
+      blocks: entry.blocks,
+      createdAt: entry.createdAt.toISOString(),
+      updatedAt: entry.updatedAt ? entry.updatedAt.toISOString() : undefined
+    }
+  }
+
+  private entryDedupKey(diaryId: string, date: string, blocks: EntryBlock[]): string {
+    return `${diaryId}::${date}::${JSON.stringify(blocks)}`
   }
 }
 
