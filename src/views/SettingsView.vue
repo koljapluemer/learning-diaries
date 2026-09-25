@@ -73,6 +73,15 @@
           </div>
         </div>
       </section>
+
+      <!-- Danger Zone Section -->
+      <section class="settings-section danger-zone">
+        <h2>Danger Zone</h2>
+        <p class="danger-description">This will permanently remove all diaries and entries from this device.</p>
+        <button @click="clearAllData" :disabled="isLoading" class="danger-btn fire-button">
+          Clear All Data
+        </button>
+      </section>
     </div>
 
     <!-- Status Messages -->
@@ -219,7 +228,7 @@ const importFromFile = async (event: Event) => {
   const file = (event.target as HTMLInputElement).files?.[0]
   if (!file) return
 
-  if (!confirm('This will replace all your current data with the imported backup. Are you sure?')) {
+  if (!confirm('This will add data from the backup and skip duplicates. Continue?')) {
     return
   }
 
@@ -236,6 +245,26 @@ const importFromFile = async (event: Event) => {
     if (fileInput.value) {
       fileInput.value.value = ''
     }
+  }
+}
+
+const clearAllData = async () => {
+  if (!confirm('This will delete all diaries and entries on this device. This cannot be undone. Continue?')) {
+    return
+  }
+
+  isLoading.value = true
+  try {
+    await db.transaction('rw', [db.diaries, db.entries], async () => {
+      await db.entries.clear()
+      await db.diaries.clear()
+    })
+    await loadStats()
+    showStatus('All data cleared')
+  } catch (error) {
+    showStatus(`Clear failed: ${error instanceof Error ? error.message : 'Unknown error'}`, 'error')
+  } finally {
+    isLoading.value = false
   }
 }
 
@@ -355,6 +384,26 @@ onBeforeUnmount(() => {
 .import-section {
   display: flex;
   align-items: center;
+}
+
+.danger-zone {
+  border: 1px solid #f0c2c2;
+  background: #fff7f7;
+}
+
+.danger-description {
+  margin-bottom: 1rem;
+  color: #8b1e1e;
+}
+
+.danger-btn {
+  background: #dc3545;
+  border-color: #dc3545;
+}
+
+.danger-btn:hover {
+  background: #c82333;
+  border-color: #c82333;
 }
 
 .status-message {
